@@ -1,7 +1,9 @@
 ---
 title: "Notas Clase 1"
 author: "Eduardo Martínez y Modificado por Fernando Alvarado"
-output: html_document
+output:
+  pdf_document:
+    latex_engine: xelatex
 ---
 
 # Introducción a lectura de datos csv, xls y xlsx
@@ -507,7 +509,7 @@ Se utiliza para el almacenamiento local de datos en aplicaciones, prototipos y p
 
 
 ```{r}
-conn <- DBI::dbConnect(RSQLite::SQLite(), "CarsDB.db")
+conn <- DBI::dbConnect(RSQLite::SQLite(), "./Data/CarsDB.db")
 ```
 
 ```{r}
@@ -527,7 +529,7 @@ head(datos)
 ```
 
 ```{r}
-dbWriteTable(conn, "cars_data", datos)
+dbWriteTable(conn, "cars_data", datos, overwrite = TRUE)
 ```
 
 
@@ -668,7 +670,7 @@ bateo |> dplyr::filter(playerID == "mcguide01") |>
 
 
 ```{r}
-con <- dbConnect(RSQLite::SQLite(), dbname = "titanic.db")
+con <- dbConnect(RSQLite::SQLite(), dbname = "./Data/titanic.db")
 ```
 
 
