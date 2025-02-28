@@ -1,0 +1,10 @@
+# Ignorar archivos HTML generados por RMarkdown
+*.html
+
+# Ignorar archivos de caché y otros archivos temporales
+*.log
+*.out
+*.aux
+*.toc
+*.lot
+*.lof
