@@ -6,7 +6,8 @@ Aqui pondre las cosdas mas importantes de este modulo para estudiar
 
 - Lubridate (Manejo de fechas)
 - Janitor   (Limpieza de datos df)
-- 
+- Manejo de NAs 
+- visdat  (limpieza de datos, NAs)
 
 
 
@@ -148,6 +149,112 @@ compare_df_cols_same(df1, df2)
 ```
 
 resultado FALSE
+
+
+La función adorn_percentages() del paquete {janitor} se usa para calcular porcentajes dentro de una tabla de frecuencia creada con tabyl(). Dependiendo del argumento que uses ("row", "col", "all"), los porcentajes se calculan en diferentes direcciones.
+
+```{r}
+# mtcars %>%
+#  tabyl(gear, cyl) %>%      # Crea una tabla de frecuencia de 'gear' y 'cyl'
+#  adorn_totals("col") %>%   # Agrega una columna con el total de cada fila
+#  adorn_percentages("row")  # Convierte los valores en porcentajes por fila
+  
+
+# mtcars %>%
+#  tabyl(gear, cyl) %>%
+#  adorn_totals("col") %>%
+#  adorn_percentages("row") %>%
+#  adorn_pct_formatting(digits = 2)  
+
+```
+
+
++ Otra función útil, es saber si ya renglones duplicados
+
+```{r}
+get_dupes(dat = mtcars)
+```
+
++ Este dataset completo tiene sus renglones diferentes todos
+
++ Pero también podemos saber si hay idénticos restringiéndonos a algunas columnas
+
++ Por ejemplo, estamos preguntándole si hay dos rengloncitos idénticos sólo considerando los variables wt y cyl
+
+```{r}
+get_dupes(dat = mtcars, wt, cyl)
+```
+
++ Un uso común es para verificar si la columna que creemos que es un ID efectivamente lo es
+
+```{r}
+get_dupes(dat = datos_ventas, id_venta)
+```
+
++ Otra función super popular es get_one_to_one(), esta función muestra que columnas (si es que las hay)
+tienen relaciones uno a uno entre sí. Es decir, si podríamos formar una función biyectiva entre dos columnas
+
+
+#### get_one_to_one() en {janitor}
+La función get_one_to_one() se usa para detectar relaciones uno a uno en un conjunto de datos, es decir, verifica si cada valor único de una columna tiene exactamente un valor correspondiente en otra columna.
+
+Esto es útil cuando trabajas con data frames y necesitas validar si hay una correspondencia exacta entre dos variables antes de hacer joins o análisis.
+
+- Ejemplo donde si 
+
+```{r}
+library(janitor)
+
+# Creamos un data frame con una relación 1 a 1
+df <- data.frame(
+  id = c(1, 2, 3, 4),
+  nombre = c("Ana", "Carlos", "Beatriz", "David")
+)
+
+# Verificamos si hay una relación 1 a 1 entre 'id' y 'nombre'
+get_one_to_one(df, id, nombre)
+```
+
+Resultado: TRUE
+
+- Ejemplo con una relación NO 1 a 1
+Si hay valores duplicados en alguna de las columnas, la relación no será 1 a 1:
+
+```{r}
+df2 <- data.frame(
+  id = c(1, 2, 2, 4),  # 'id' 2 aparece dos veces
+  nombre = c("Ana", "Carlos", "Beatriz", "David")
+)
+
+get_one_to_one(df2, id, nombre)
+
+```
+
+Resultado: FALSE
+
+### Manejo de NAs (primera visita)
+
+```{r}
+mi_dataframe <- data.frame(v1 = c(1, NA, 3),
+                           v2 = c(NA, NA, NA),
+                           v3 = c("a", NA, "b"))
+
+mi_dataframe
+```
+
+Una primera solución rápida, pero probablemente incorrecta es quitar los renglones y columnas que tienen NA (esto es muy drástico)
+
+```{r}
+mi_dataframe |> remove_empty(c("rows", "cols"))
+```
+
+### Libreria visdat 
+
+El paquete visdat se usa para visualizar la estructura y calidad de los datos en un data frame de manera rápida y efectiva. Es útil para detectar valores faltantes, tipos de datos y posibles inconsistencias antes de hacer limpieza de datos.
+
+
+
+
 
 
 

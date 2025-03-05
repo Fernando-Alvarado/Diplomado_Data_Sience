@@ -27,7 +27,7 @@ library(lubridate) # Sirve para manejar algunas variables de fecha
 + Empecemos cargando de nuevo dataset del archivo "VentasNum2024.xlsx"
 
 ```{r}
-datos_ventas <- readxl::read_xlsx("VentasNum2024.xlsx", sheet = "Ventas")
+datos_ventas <- readxl::read_xlsx("../Sesion02/VentasNum2024.xlsx", sheet = "Ventas")
 ```
 
 + Veamos un poco de este dataset
@@ -277,7 +277,7 @@ datos[1:5,] %>% dplyr::select(birth_year, films)
 + Veamos qué pasa con algunos de nuestros dataset "reales"
 
 ```{r}
-data_superstore <- read_csv("Sample - Superstore.csv")
+data_superstore <- read_csv("../Sesion02/Sample - Superstore.csv")
 ```
 
 ```{r}
