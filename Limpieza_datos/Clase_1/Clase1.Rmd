@@ -440,7 +440,7 @@ data_por_estado %>% ggplot() +
                color="white", linewidth = 0.2) +
   scale_fill_gradient2(low = "orange", 
                        mid = "lightskyblue3", high = "dodgerblue4", midpoint = 0) +
-  geom_label_repel(data = df_para_etiquetas, aes(x=long, y=lat, label = region),
+  geom_label_repel(data = df_para_etiquetas, aes(x=long, y=lat, label = region),  #Estamos poniendo la etiqueta usando otro df
              color = "dodgerblue4", size = 2) +
   theme_light() +
   theme(axis.text.x = element_blank(),

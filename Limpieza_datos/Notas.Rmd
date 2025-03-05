@@ -1,0 +1,163 @@
+# Notas
+
+Aqui pondre las cosdas mas importantes de este modulo para estudiar
+
+## Indice 
+
+- Lubridate (Manejo de fechas)
+- Janitor   (Limpieza de datos df)
+- 
+
+
+
+# Clase 3
+
+### Repaso de lubridate
+
+El paquete lubridate en R se usa para manipular y trabajar con fechas y horas de manera sencilla. Facilita la conversión, extracción y operación con datos de tipo date-time (POSIXct, POSIXlt, Date), lo que ayuda a evitar errores comunes en el manejo de fechas.
+
+```{r}
+
+library(lubridate) # Sirve para manejar algunas variables de fecha
+
+library(lubridate)
+
+# Crear una fecha desde un string
+fecha <- ymd("2024-03-04")
+print(fecha)  # Devuelve: "2024-03-04"
+
+# Extraer componentes de la fecha
+año <- year(fecha)     # 2024
+mes <- month(fecha)    # 3
+dia <- day(fecha)      # 4
+
+# Crear fecha y hora
+fecha_hora <- ymd_hms("2024-03-04 14:30:45")
+print(fecha_hora)  # "2024-03-04 14:30:45 UTC"
+
+# Sumar o restar tiempo
+nueva_fecha <- fecha + days(10)  # Sumar 10 días
+print(nueva_fecha)  # "2024-03-14"
+
+# Identificar el día de la semana
+dia_semana <- wday(fecha, label = TRUE, abbr = FALSE)
+print(dia_semana)  # "lunes"
+
+# Convertir un string con formato ambiguo
+fecha2 <- dmy("04-03-2024")  # Día-Mes-Año
+print(fecha2)  # "2024-03-04"
+
+```
+
+
+#### Funciones útiles de lubridate
+- ymd(), mdy(), dmy(): Convertir strings en fechas.
+- ymd_hms(), mdy_hms(), dmy_hms(): Fechas con horas, minutos y segundos.
+- year(), month(), day(), wday(): Extraer partes de la fecha.
+- hour(), minute(), second(): Extraer partes de la hora.
+- days(), months(), years(): Para sumar o restar tiempo.
+
+
+
+### Repaso Janitor
+
+El paquete janitor en R se utiliza para limpiar y organizar datos de manera eficiente. Es especialmente útil cuando trabajas con data frames desordenados o con nombres de columnas inconsistentes.
+
+
+
+```{r}
+
+library(janitor)
+library(dplyr)  # Para manipulación de datos
+
+# Crear un data frame con problemas
+df <- data.frame(
+  "Nombre Cliente" = c("Ana", "Carlos", "Beatriz"),
+  " Ventas 2024 " = c(100, 200, 150),
+  "Categoría" = c("A", "B", "A")
+)
+
+#  Limpiar nombres de columnas
+df_limpio <- clean_names(df)
+print(df_limpio)
+
+```
++ Limpia de forma automatica el nombre de las columnas
+
+Resultado 
+  nombre_cliente ventas_2024 categoria
+1          Ana         100         A
+2       Carlos         200         B
+3      Beatriz         150         A
+
+
++ Borra files de forma inmediata
+
+```{r}
+df2 <- data.frame(
+  id = c(1, 2, 2, 3),
+  valor = c(10, 20, 20, 30)
+)
+
+df2_sin_duplicados <- df2 %>% remove_duplicate_rows()
+print(df2_sin_duplicados)
+
+```
+
+
+Detectar valores vacíos o NA
+
++ tabyl() genera una tabla de frecuencia rápida.
+
+
+```{r}
+df3 <- data.frame(
+  producto = c("A", "B", "C"),
+  precio = c(100, NA, 200)
+)
+
+# Revisar valores faltantes
+tabyl(df3, precio)
+
+```
+
+
+
+La función compare_df_cols_same() se usa para comparar las columnas de diferentes data frames y verificar si tienen el mismo tipo de datos (data type).
+
+Esto es útil cuando trabajas con múltiples data frames y necesitas asegurarte de que las columnas coincidan en sus tipos antes de unirlos (merge, bind_rows, join), evitando errores por diferencias en los tipos de datos.
+
+
+
+```{r}
+# Creamos dos data frames con columnas similares pero con diferencias en los tipos de datos
+df1 <- data.frame(
+  id = c(1, 2, 3),
+  nombre = c("Ana", "Carlos", "Beatriz"),
+  ventas = c(100, 200, 150)
+)
+
+df2 <- data.frame(
+  id = c("1", "2", "3"),  # Aquí 'id' es de tipo character, no numérico
+  nombre = c("Ana", "Carlos", "Beatriz"),
+  ventas = c(100, 200, 150)
+)
+
+# Comparar las columnas de los dos data frames
+compare_df_cols_same(df1, df2)
+```
+
+resultado FALSE
+
+
+
+
+
+
+
+
+
+
+```{r}
+
+```
