@@ -7,7 +7,9 @@ Aqui pondre las cosdas mas importantes de este modulo para estudiar
 - Lubridate (Manejo de fechas)
 - Janitor   (Limpieza de datos df)
 - Manejo de NAs 
-- visdat  (limpieza de datos, NAs)
+- visdat  (visualizar NAs)
+- naniar  (transformar NAs y hacer un poco de estadisticas con ellos)
+- simputation (En caso de no borrar los NAs, podemos simularlos con regresion, etc)
 
 
 
@@ -252,12 +254,161 @@ mi_dataframe |> remove_empty(c("rows", "cols"))
 
 El paquete visdat se usa para visualizar la estructura y calidad de los datos en un data frame de manera rápida y efectiva. Es útil para detectar valores faltantes, tipos de datos y posibles inconsistencias antes de hacer limpieza de datos.
 
+Para practicar puedes usar los datos airquality
+
++ Qué hace?
+
+- Muestra los tipos de datos de cada columna en colores diferentes.
+- Identifica rápidamente columnas con valores faltantes (NA).
+
+```{r}
+library(visdat)
+
+# Cargar datos de ejemplo
+data("airquality")
+
+# Visualizar la estructura del dataset
+vis_dat(airquality)
+```
+
+crea una grafica, para visualizar cuantos NA tenemos
+
++ Solo ver NaS
+
+```{r}
+vis_miss(airquality), grafica para solo visualizar NAs
+```
+
++ Resalta valores que cumplen una condición (ejemplo: valores mayores a 100).
+
+```{r}
+vis_expect(airquality, ~ . > 100)
+```
+
+### Libreria naniar
+
+El paquete naniar está diseñado para analizar y visualizar valores faltantes (NA) en los datos. Es muy útil cuando necesitas identificar patrones de datos ausentes y decidir cómo manejarlos (imputación, eliminación, etc.).
+
+
+```{r}
+library(naniar)
+```
+
+- Muestra un gráfico donde cada fila es una observación y cada columna una variable.
+- Resalta en color los valores que son NA.
+
+```{r}
+# Cargar datos de ejemplo
+data("airquality")
+
+# Visualizar valores faltantes
+vis_miss(airquality)
+```
+
++Sustituye valores específicos (-99) por NA en la columna score.
+
+```{r}
+df <- data.frame(
+  id = c(1, 2, 3, 4),
+  score = c(10, -99, 30, -99)  # -99 indica valores faltantes
+)
+
+# Reemplazar -99 por NA en la columna score
+df_limpio <- df %>%
+  replace_with_na(replace = list(score = -99))
+
+print(df_limpio)
+```
+
++ Crea un gráfico de barras con la cantidad de valores faltantes por columna.
+
+```{r}
+gg_miss_var(airquality)
+```
+
++ La función `add_prop_miss()` me dice la proporción de faltantes por renglón
+
+```{r}
+datos %>%
+  add_prop_miss() %>%
+  head(n = 15)
+```
+
++ Podemos hacer también un resumen de los faltantes por columna
+
+```{r}
+datos |> miss_var_summary()
+```
+
++ Haciendo una grafica para ver los datos faltantes
+
+```{r}
+datos |> ggplot(aes(x = Solar.R, y = Ozone)) + 
+  geom_miss_point()
+```
+
++ Las funciones `shadow` sirven para hacer un seguimiento de los valores faltantes.
+
++ La función `as_shadow` crea un dataframe con el mismo conjunto de columnas, pero con los nombres de las columnas a los que se les añade un sufijo _NA.
+
+```{r}
+datos |> as_shadow()
+datos |> bind_shadow() # Hace una tabla mas bonita
+```
+
+Funcion, para hacer estadisticas descriptivas de los NA y poder decidir como actuar frente a ellos
+
+```{r}
+datos %>% bind_shadow() %>% 
+  group_by(Ozone_NA) %>% 
+  summarise_at(.vars = "Solar.R",
+               .funs = c("mean", "sd", "var", "min", "max"),
+               na.rm = TRUE)
+```
+
+### Libreria simputation
+
+```{r}
+library(simputation)
+```
+
+
+```{r}
+
+```
+
+
+```{r}
+
+```
 
 
 
+```{r}
+
+```
+
+
+```{r}
+
+```
+
+
+```{r}
+
+```
 
 
 
+```{r}
+
+```
+
+
+
+```{r}
+
+```
 
 
 

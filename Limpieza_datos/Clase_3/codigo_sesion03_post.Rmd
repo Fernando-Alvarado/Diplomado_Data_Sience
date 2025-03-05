@@ -306,6 +306,7 @@ mi_dataframe
 
 
 ```{r}
+library(visdat)
 mi_dataframe |> remove_empty(c("rows", "cols"))
 ```
 + Esto es muy drástico
