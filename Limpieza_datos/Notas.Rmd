@@ -372,46 +372,32 @@ datos %>% bind_shadow() %>%
 library(simputation)
 ```
 
++ La mayoría de sus métodos se basan en completar los datos faltantes con regresión
+
++ Recordatorio: La variable Ozone es la que queremos rellenar pues tiene muchos NAs
 
 ```{r}
-
+datos_imp_reglin <- impute_lm(datos, Ozone ~ Temp + Wind)
 ```
 
+Veamos como quedaron los datos
 
 ```{r}
-
+datos_imp_reglin |> miss_var_summary()
 ```
 
-
-
-```{r}
-
-```
-
-
-```{r}
-
-```
++ Ya "arreglé" el tema de NAs en la columna Ozone
 
 
 ```{r}
-
+datos %>% bind_shadow() %>%
+  as.data.frame() %>% 
+  impute_lm(Ozone ~ Temp + Wind) %>%
+  ggplot(aes(x = Temp,
+             y = Ozone,
+             colour = Ozone_NA)) + 
+  geom_point()
 ```
-
-
-
-```{r}
-
-```
-
-
-
-```{r}
-
-```
-
-
-
 
 
 
