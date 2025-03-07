@@ -10,6 +10,9 @@ Aqui pondre las cosdas mas importantes de este modulo para estudiar
 - visdat  (visualizar NAs)
 - naniar  (transformar NAs y hacer un poco de estadisticas con ellos)
 - simputation (En caso de no borrar los NAs, podemos simularlos con regresion, etc)
+- mice imputr valores faltantes
+- rpart      Arboles de decicion, para hacer regresiones mas eficientes
+- recipes  preprocesamiento de datos
 
 
 
@@ -377,15 +380,15 @@ library(simputation)
 + Recordatorio: La variable Ozone es la que queremos rellenar pues tiene muchos NAs
 
 ```{r}
-datos_imp_reglin <- impute_lm(datos, Ozone ~ Temp + Wind)
+datos_imp_reglin <- impute_lm(datos, Ozone ~ Temp + Wind)  # Rellena los datos usando regresion linal
 ```
 
 Veamos como quedaron los datos
 
 ```{r}
-datos_imp_reglin |> miss_var_summary()
+library(naniar)
+datos_imp_reglin |> miss_var_summary() #Nos da una proporcion de cuantos datos NAs tenemos
 ```
-
 + Ya "arreglé" el tema de NAs en la columna Ozone
 
 
@@ -400,7 +403,143 @@ datos %>% bind_shadow() %>%
 ```
 
 
+### Libreria mice
 
+El paquete mice (Multivariate Imputation by Chained Equations) en R se usa para imputar valores faltantes en conjuntos de datos mediante métodos estadísticos avanzados.
+
+¿Para qué sirve mice?
+- Rellena los valores faltantes en un data frame de manera adecuada, evitando sesgos en el análisis.
+- Usa el método de imputación múltiple (Multiple Imputation), lo que significa que genera varias versiones del dataset con diferentes valores imputados, mejorando la robustez del análisis.
+- Es útil cuando los datos faltan de forma aleatoria (Missing at Random, MAR).
+
+
+```{r}
+library(mice)
+
+# Crear un data frame con valores faltantes
+df <- data.frame(
+  var1 = c(1, 2, NA, 4, 5),
+  var2 = c(NA, 3, 4, NA, 6)
+)
+
+# Ver resumen de datos faltantes
+md.pattern(df)
+
+# Aplicar imputación con mice
+imputed_data <- mice(df, method = "pmm", m = 5) 
+
+# Obtener el dataset imputado
+complete_data <- complete(imputed_data)
+
+# Ver el dataset imputado
+print(complete_data)
+```
+
+Explicación del código:
+
+- md.pattern(df) → Muestra el patrón de valores faltantes en el dataset. mice(df, method = "pmm", m = 5):
+- "pmm" (Predictive Mean Matching) es el método de imputación.
+- m = 5 genera 5 versiones diferentes del dataset imputado.
+- complete(imputed_data) → Extrae una versión del dataset con los valores imputados.
+
+
+Te dice un patron de los datos que hacen falta
+
+```{r}
+datos |> md.pattern()
+```
+
+
++ No solo podemos ajustar un modelo de regresion lineal, tambien podemos ajustar un modelo de arbol 
+(CART: classification and regresion tree)
+
+```{r}
+datos_imp_arbol <- impute_cart(datos, Ozone ~ .)
+```
+
+### Libreria rpart
+
+a librería rpart en R se utiliza para la construcción de árboles de decisión para clasificación y regresión. Es una de las implementaciones más comunes del algoritmo CART (Classification and Regression Trees).
+
+Funciones principales:
+
+- rpart() – Crea un árbol de decisión.
+- printcp() – Muestra la tabla de costos de poda del árbol.
+- plotcp() – Grafica la tabla de costos de poda.
+- prune() – Poda el árbol para evitar sobreajuste.
+- predict() – Realiza predicciones usando el árbol generado.
+- summary() – Muestra detalles sobre el modelo ajustado.
+
+
+```{r}
+# Cargar la librería
+library(rpart)
+
+# Usar el dataset iris
+data(iris)
+
+# Crear un árbol de decisión para clasificar especies de flores
+modelo <- rpart(Species ~ ., data = iris, method = "class")
+
+# Visualizar el árbol generado
+print(modelo)
+plot(modelo)
+text(modelo, use.n = TRUE)
+```
+
+Ejemplo de diplomado para entender los datos 
+
+```{r}
+
+datos %>%
+  add_prop_miss() %>%
+  rpart(prop_miss_all ~ ., data = .) %>%
+  prp(type = 4, extra = 101, prefix = "Prop. Miss = ", cex=0.7) #Con cex, aumentas el tamaño del texto
+```
+
+```{r}
+
+```
+
+### recipes
+
+La librería recipes en R se utiliza para la preprocesamiento de datos en modelos de aprendizaje automático. Forma parte del ecosistema tidymodels y permite definir pasos secuenciales para limpiar y transformar datos antes del modelado.
+
+Funciones principales:
+
+- recipe() – Crea una receta para procesar datos.
+- step_center() – Centra las variables numéricas (resta la media).
+- step_scale() – Escala las variables numéricas (divide por la desviación estándar).
+- step_normalize() – Normaliza datos (resta la media y divide por la desviación estándar).
+- step_dummy() – Convierte variables categóricas en variables dummy.
+- prep() – Prepara la receta para ser aplicada a los datos.
+- bake() – Aplica la receta a los datos nuevos.
+
+
+
+```{r}
+# Cargar librerías
+library(recipes)
+library(dplyr)
+
+# Cargar datos
+data(iris)
+
+# Definir una receta para preprocesar los datos
+receta <- recipe(Species ~ ., data = iris) %>%
+  step_center(all_numeric()) %>%  # Centrar variables numéricas
+  step_scale(all_numeric()) %>%   # Escalar variables numéricas
+  step_dummy(all_nominal(), -all_outcomes()) # Convertir variables categóricas en dummies
+
+# Preparar la receta
+receta_prep <- prep(receta, training = iris)
+
+# Aplicar la receta a los datos
+iris_procesado <- bake(receta_prep, new_data = iris)
+
+# Ver los primeros registros transformados
+head(iris_procesado)
+```
 
 ```{r}
 
