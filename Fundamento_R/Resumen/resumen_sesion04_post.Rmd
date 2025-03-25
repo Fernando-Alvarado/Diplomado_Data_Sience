@@ -1,0 +1,121 @@
+---
+title: "Resumen - Sesión 04 (post)"
+output: html_document
+---
+
+# Resumen de funciones y conceptos: Sesión 04 (post)
+
+Esta sesión está dedicada a las **estructuras de control** en R. Estas permiten tomar decisiones y repetir bloques de código dependiendo de condiciones lógicas.
+
+---
+
+## 🧠 ¿Qué son las estructuras de control?
+
+Permiten controlar el flujo de ejecución de un script:
+- Ejecutar condiciones (`if`, `else`)
+- Repetir código (`for`, `while`, `repeat`)
+- Controlar la ejecución de ciclos (`next`, `break`)
+
+---
+
+## ✅ Condicionales: `if` y `else`
+
+```{r}
+x <- runif(1, 0, 10)  # número aleatorio entre 0 y 10
+
+if (x > 3) {
+  y <- 10
+} else {
+  y <- 0
+}
+```
+
+---
+
+## 🔁 Bucles: `for`
+
+### Iterar sobre un rango:
+
+```{r}
+for (i in 1:10) {
+  print(i)
+}
+```
+
+### Iterar sobre elementos de un vector:
+
+```{r}
+x <- c("a", "b", "c", "d")
+for (i in 1:4) {
+  print(x[i])
+}
+```
+
+También puedes recorrer vectores de forma desordenada:
+
+```{r}
+for (i in c(3,2,1,4,2)) {
+  print(x[i])
+}
+```
+
+---
+
+## 🔡 Iterar sobre caracteres
+
+```{r}
+palabras <- c("ciencia", "datos", "estadística", "probabilidad", "flujo")
+for (palabra in palabras) {
+  print(palabra)
+}
+```
+
+---
+
+## 📦 Iterar sobre listas
+
+```{r}
+lista_estudiantes <- list(
+  c(123, 456, 789, 369),
+  c("Julianna", "Felipe", "Verónica", "Federico"),
+  7
+)
+
+for (componente in lista_estudiantes) {
+  print(componente)
+}
+```
+
+---
+
+## 🧮 Utilidades comunes en bucles
+
+### `seq_along(x)`: genera índices de un objeto
+
+```{r}
+x <- c("a", "b", "c", "d")
+for (i in seq_along(x)) {
+  print(x[i])
+}
+```
+
+### `seq_len(n)`: genera secuencia del 1 al `n`
+
+```{r}
+for (i in seq_len(4)) {
+  print(i)
+}
+```
+
+---
+
+## 🧩 Otras estructuras (vistas en teoría)
+
+- `while`: ejecuta mientras se cumpla una condición.
+- `repeat`: ejecuta infinitamente hasta que se interrumpa.
+- `next`: salta a la siguiente iteración.
+- `break`: termina el bucle actual.
+
+---
+
+Este resumen proporciona una base práctica sobre cómo estructurar control de flujo en R para tomar decisiones y automatizar tareas repetitivas en scripts o funciones.

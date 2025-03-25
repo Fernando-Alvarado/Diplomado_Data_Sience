@@ -1,0 +1,106 @@
+---
+title: "Resumen - Sesión 06 (post)"
+output: html_document
+---
+
+# Resumen de funciones y conceptos: Sesión 06 (post)
+
+Esta sesión utiliza el paquete `{Lahman}`, que contiene datos históricos del béisbol, para practicar manipulación de datos, filtrado condicional y visualización en R.
+
+---
+
+## 📦 Librerías utilizadas
+
+```{r}
+library(ggplot2movies)  # (No se usó directamente, pero fue cargado)
+library(ggplot2)        # Visualización
+library(dplyr)          # Manipulación de datos
+library(palmerpenguins) # Dataset alternativo (no usado aquí)
+library(Lahman)         # Base de datos de béisbol
+```
+
+---
+
+## 📊 Exploración del dataset `Batting`
+
+```{r}
+datos <- Lahman::Batting
+str(datos)
+help(Batting)
+```
+
+Se estudia cuántas veces aparece cada jugador en la base:
+
+```{r}
+datos %>% group_by(playerID) %>%
+  summarise(conteo = n()) %>%
+  top_n(20, wt = conteo) %>%
+  arrange(desc(conteo))
+```
+
+---
+
+## 🔍 Filtrado por jugador y visualización
+
+Se filtran los datos del jugador `"mcguide01"`:
+
+```{r}
+datos <- datos %>% filter(playerID == "mcguide01")
+```
+
+Se crea una gráfica básica de número de carreras por año (`R` vs `yearID`):
+
+```{r}
+ggplot(datos) + geom_point(aes(x = yearID, y = R))
+```
+
+También se examina si en ciertos años aparece más de una vez (por jugar en varios equipos).
+
+---
+
+## 🔢 Uso de operadores lógicos
+
+R permite combinar condiciones lógicas:
+
+```{r}
+5 < 7             # TRUE
+!(5 < 7)          # FALSE
+6 <= 6            # TRUE
+(5 < 7) & (5 > 6) # FALSE
+```
+
+Símbolos lógicos comunes:
+
+- `&`: Y lógico (AND)
+- `|`: O lógico (OR)
+- `!`: Negación (NOT)
+
+---
+
+## 📋 Otras tablas del paquete `Lahman`
+
+```{r}
+datos_personas <- Lahman::People
+datos_pitching <- Lahman::Pitching
+datos_fielding <- Lahman::Fielding
+```
+
+Confirmación de IDs únicos en la tabla `People`:
+
+```{r}
+datos_personas %>% select(playerID) %>% unique()
+```
+
+---
+
+## 🧪 Práctica con `dplyr`
+
+- `filter()`: filtrar filas por condición.
+- `select()`: seleccionar columnas.
+- `mutate()`: crear nuevas columnas.
+- `group_by()` + `summarise()`: agrupamiento y resumen.
+- `arrange()`: ordenar filas.
+
+---
+
+Esta sesión reforzó el uso de operadores lógicos, gráficos con `ggplot2` y manipulación con `dplyr`, todo en el contexto de una base de datos relacional rica como `{Lahman}`.

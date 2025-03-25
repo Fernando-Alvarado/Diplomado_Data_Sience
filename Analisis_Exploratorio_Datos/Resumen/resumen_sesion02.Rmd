@@ -1,0 +1,110 @@
+---
+title: "Resumen - Sesión 02"
+output: html_document
+---
+
+# Resumen de funciones y conceptos: Sesión 02
+
+Este documento resume los conceptos clave y funciones utilizadas durante la segunda sesión, enfocada en **técnicas de muestreo**.
+
+---
+
+## 📦 Librerías utilizadas
+
+```{r}
+library(dplyr)  # Manipulación de datos y creación de data frames ordenados
+```
+
+---
+
+## 🎯 Conceptos de Muestreo
+
+### ¿Qué es una muestra?
+
+- Una muestra es un subconjunto de una población.
+- En análisis de datos, incluso un `data.frame` puede verse como una muestra de una población más grande.
+- Las técnicas de muestreo permiten simular o entender cómo se podrían comportar diferentes subconjuntos de datos.
+
+---
+
+## 📌 Técnicas de Muestreo vistas
+
+### 1. Muestreo Aleatorio Simple
+
+- Cada elemento de la población tiene la **misma probabilidad** de ser seleccionado.
+- Se usa la función `sample()`:
+
+```{r}
+IDs <- 18:75
+muestra_aleatoria <- sample(x = IDs, size = 10)
+```
+
+- Cada ejecución devuelve un conjunto distinto.
+
+---
+
+### 2. Muestreo con Reemplazo
+
+- Un elemento seleccionado puede volver a ser elegido.
+- Se añade el argumento `replace = TRUE` en `sample()`:
+
+```{r}
+tipo_escritura <- c("zurdo", "diestro", "ambos")
+sample(x = tipo_escritura, size = 10, replace = TRUE)
+```
+
+---
+
+### 3. Muestreo Ponderado
+
+- A cada elemento se le asigna una **probabilidad diferente** de ser seleccionado.
+- Se utiliza el argumento `prob = ...`:
+
+```{r}
+ponderaciones <- c(0.2, 0.7, 0.1)
+sample(tipo_escritura, size = 8, prob = ponderaciones, replace = TRUE)
+```
+
+- También se puede aplicar para grandes muestras y verificar proporciones empíricas:
+
+```{r}
+muestra_ponderada <- sample(tipo_escritura, size = 10000, prob = ponderaciones, replace = TRUE)
+table(muestra_ponderada)
+```
+
+---
+
+### 4. Muestreo con Data Frames
+
+- Se pueden usar combinaciones con `tibble()` y `mutate()` para asignar etiquetas o simulaciones dentro de un data frame:
+
+```{r}
+tibble(IDs = 18:75) |>
+  group_by(IDs) |>
+  mutate(escritura = sample(tipo_escritura, size = 1, prob = ponderaciones)) |>
+  ungroup()
+```
+
+---
+
+### 5. Muestreo Estratificado
+
+- La población está dividida en grupos o "estratos".
+- Se toma una muestra de cada estrato usando la función `by()`:
+
+```{r}
+datos <- data.frame(
+  grupo = c("1o", "1o", "1o", "1o", "2o", "2o", "2o", "3o", "3o"),
+  estudiante = c("Ariel", "Enrique", "Elena", "Fenando", "Julian",
+                 "Eugenia", "Rocio", "David", "Felipe"),
+  calificacion = c(85, 90, 78, 88, 92, 95, 75, 68, 100)
+)
+
+by(data = datos, INDICES = datos$grupo, FUN = function(df) mean(df$calificacion))
+```
+
+- `by()` aplica una función a subconjuntos definidos por un factor, útil para calcular estadísticas por grupo.
+
+---
+
+Este resumen abarca las principales formas de muestreo presentadas en la sesión 2, utilizando `sample()`, `replace`, `prob`, `by()` y operadores de `dplyr` para enriquecer la simulación y análisis de subconjuntos poblacionales.

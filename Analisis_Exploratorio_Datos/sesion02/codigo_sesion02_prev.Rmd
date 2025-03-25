@@ -1,0 +1,393 @@
+---
+title: "Sesion 2"
+author: "Eduardo Martínez"
+date: "2025-03-20"
+output: html_document
+---
+
+```{r}
+library(dplyr)
+```
+
+
+## Un centavo de muestreo...
+
+### Muestreo aleatorio simple
+
+
++ Eb general una muestra es un subconjunto de una poblacion de interes
+
++ Formalmente, cada que consultamos un dataset es una muestra de la poblacion de interes 
+
++ Aunque generalmente, tomamos dicho dataset como la poblacion completa
+
++ lo que sigue es ver como se obtienen algunas muestra de diferentes tipos
+
+
++ Usaremos la funcion somple() y modificaciones de esta
+
+### Muestreo aleatorio simple 
+
++ se puede ver como ir sacando pelotitas de una urma y la sacamoe
+
++ Cada una de la pelotitas tiene la misma probabilidad de ser sacada
+
+
+```{r}
+IDs <- 18:75 # Vector numerico que ve del 18 al 75
+#Quiero obtener una muestra aleatoria de tamaño 10 de este vector
+muestra_aleatoria <- sample(x = IDs, size = 10)
+muestra_aleatoria
+```
++ Con cada ejecucion obtengo una muestra diferente 
+
+### Muestreo con reemplazo
+
+
++ En este caso se saca una pelotita se ve que color es y se regresa a la urna, con lo que cada pelotita tiene la misma pobabilidad de ser sacada
+
+```{r}
+tipo_escritura <- c("zurdo", "diestro", "ambos")
+muestra_con_reemplazo <- sample(x = tipo_escritura, size = 10, replace = TRUE)
+muestra_con_reemplazo
+```
+### Muestreo con ponderaciones
+
++ Hay veces que, sabesmos a priori que hay una (o algunas) pelotitas que debiesen tener mayor probabilidad de ser sacadas
+
+```{r}
+tipo_escritura <- c("zurdo", "diestro", "ambos")
+ponderaciones <- c(0.2, 0.7, 0.1)  #Agregando los pesos a nuestras extracciones 
+muestra_ponderada <- sample(tipo_escritura, size = 2, prob = ponderaciones)
+muestra_ponderada
+```
+```{r}
+muestra_ponderada <- sample(tipo_escritura, size = 8, prob = ponderaciones, replace = TRUE)
+muestra_ponderada
+```
++ Empiricamente, me tendria que salir aprox 20% de zurdos, 70% de diestros y 10% de ambos
+
+
+```{r}
+tipo_escritura <- c("zurdo", "diestro", "ambos")
+ponderaciones <- c(0.2, 0.7, 0.1)
+muestra_ponderada <- sample(tipo_escritura, size = 10000, prob = ponderaciones, replace = TRUE)
+muestra_ponderada |> table()
+```
++ Se puede hacer en un dataframe con la librería `dplyr`
+
+
+
+
+
+```{r}
+tibble(IDs = 18:75) |>
+  group_by(IDs) |>
+  dplyr::mutate(escritura = sample(tipo_escritura, size = 1, prob = ponderaciones)) |>
+  ungroup()
+```
+
+
+### Muestreo estratificado
+
++ En este caso tenemos una poblacion que esta segmentada en grupitos a.k. estats
+
++ Y en cada strato queremos una muestra
+
++ Para esto, vamos a ocupar la funcion by()
+
+
++ La función by() aplica una función a un subconjunto específico de un data frame basado en uno o más factores.
+
+```{r}
+datos <- data.frame(
+  grupo = c("1o", "1o", "1o", "1o", "2o", "2o", "2o", "3o", "3o"),
+  estudiante = c("Ariel", "Enrique", "Elena", "Fenando", "Julian",
+                 "Eugenia", "Rocio", "David", "Felipe"),
+  calificacion = c(85, 90, 78, 88, 92, 95, 75, 68, 100)
+)
+
+datos
+```
+
++ Para ver como opera la funcion by() calculare la media de las calificaciones de cada uno de los grupos (la media de 1o, la media de 2do y 3er)
+
+```{r}
+calif_promedio <- by(data = datos$calificacion,
+                     INDICES = datos$grupo, #Variable que indica los grupitos
+                     FUN = mean) #La funcion que aplicare en cada grupito 
+calif_promedio
+```
+
++ by() aplica una funcion a un "grupito"
+
+```{r}
+calif_promedio |> str()
+```
+
++ Ahora si usemosla para hacer muestreo estratificado 
+
+```{r}
+by(data = datos$calificacion, # Quiero sacar una muestra de las calificaciones, pero la quiero para cada grupito 
+   INDICES = datos$grupo,
+   FUN = function(x) sample(x, size = 2) # Quiero obtener una muestra de tamaño 2 de cada grupito 
+    )
+```
+
+```{r}
+by(data = datos$calificacion,
+   INDICES = datos$grupo,
+   FUN = function(x) sample(x, size = 2)
+    ) |> unlist()
+```
+
+# Una pequeña ayuda para hacer visualizaciones
+
++ La libreria {esquisse} tiene basicamente una funcion, que se llama ` esquisser` que nos depliega un IDE, 
+
+```{r}
+library(esquisse)
+library(palmerpenguins)
+```
+
+```{r}
+datos <- palmerpenguins::penguins
+```
+
+```{r}
+esquisser(datos)
+```
+
+```{r}
+ggplot(datos) +
+  aes(x = body_mass_g, fill = sex) +
+  geom_density(adjust = 1L) +
+  geom_density(aes(x = body_mass_g), adjust = 1L) +
+  scale_fill_hue(direction = 1) +
+  labs(
+    x = "Masa Corporal",
+    y = " ",
+    title = "Mi favulosa grafica",
+    subtitle = "Cada vez mas fabulosa"
+  ) +
+  ggthemes::theme_calc() +
+  theme(
+    legend.position = "top",
+    legend.text = element_text(face = "italic",
+    size = 12L),
+    legend.title = element_text(face = "bold.italic")
+  ) +
+  facet_wrap(vars(species))
+
+```
+
+
+
+# Actividad usando squisser
+
+```{r}
+library(titanic)
+
+datos2 <- titanic::titanic_train
+datos2 |> head()
+
+```
+
+
+```{r}
+esquisser(datos2)
+```
+
+```{r}
+ggplot(datos2) +
+  aes(x = Sex, y = Survived, fill = Embarked) +
+  geom_col() +
+  scale_fill_hue(direction = 1) +
+  labs(
+    title = "Supervivientes y no Suvervivientes",
+    subtitle = "del Titanic"
+  ) +
+  ggthemes::theme_base() +
+  theme(
+    legend.text = element_text(face = "italic",
+    size = 13L)
+  ) +
+  facet_wrap(vars(Pclass))
+
+```
+
+
+
+```{r}
+library(ggplot2) # Visualizaciones
+library(ggExtra) # Visualizaciones
+library(corrplot) # Visualizaciones de la matriz de correlación
+library(dplyr) # Operaciones entre dataframes
+library(magrittr) # Algunos operadores de asignación
+library(palmerpenguins) # El dataset de los pingüinitos
+library(visdat) # Visualización de los datos faltantes
+library(skimr) # Para generer métricas
+library(janitor) # Para embellecer
+library(moments) # Calcular la kurtosis y la skewness
+library(hexbin) # Auxiliar para visualización
+```
+
++ Vamos a hacer unas graficas sencillas
+
+```{r}
+datos <- ggplot2::msleep
+```
+
+```{r}
+datos |> ggplot() +
+  geom_histogram(aes(x = sleep_total, y = ..density..),
+                 bins = 40, fill = "blue", alpha = 0.5) +
+  geom_density(aes(x = sleep_total), color = "red", size = 0.5) +
+  theme_light()
+```
+
+```{r}
+datos |> ggplot() +
+  geom_histogram(aes(x = sleep_total, y = ..density..),
+                 bins = 40, fill = "blue", alpha = 0.5) +
+  geom_density(aes(x = sleep_total), color = "red", size = 0.5) +
+  facet_wrap(~vore) +
+  theme_light()
+```
+
+
+```{r}
+datos |> dplyr::select(where(is.numeric)) |>
+  cor(use = "complete.obs") |> corrplot.mixed(order = 'AOE')
+```
+
+```{r}
+datos |> dplyr::select(where(is.numeric)) |>
+  cor(use = "complete.obs")
+```
+
+```{r}
+# Correlación (Relación lineal de toda la vida)
+datos |> dplyr::select(where(is.numeric)) |>
+  cor(use = "complete.obs", method = "pearson") |> corrplot.mixed(order = 'AOE')
+```
+
+```{r}
+# Correlación (Relación monótona)
+datos |> dplyr::select(where(is.numeric)) |>
+  cor(use = "complete.obs", method = "spearman") |> corrplot.mixed(order = 'AOE')
+```
+
+
+```{r}
+datos |> ggplot() +
+  geom_point(aes(x = sleep_total, y = brainwt)) +
+  theme_light()
+```
+
+```{r}
+graf <- datos |> ggplot(aes(x = sleep_total, y = brainwt)) +
+  geom_point() +
+  theme_light()
+
+graf <- ggMarginal(graf, type = "histogram")
+```
+
+```{r}
+graf
+```
+
+```{r}
+graf <- datos |> ggplot(aes(x = sleep_total, y = brainwt, color = vore)) +
+  geom_point() +
+  theme_light()
+
+graf <- ggMarginal(graf, type = "histogram",
+                   groupColour = TRUE,
+                   groupFill = TRUE)
+```
+
+```{r}
+graf
+```
+
+
+```{r}
+datos |> ggplot() +
+  geom_point(aes(x = sleep_total, y = brainwt, color = vore)) +
+  facet_wrap(~vore) +
+  theme_light()
+```
+
+
+
+```{r}
+datos |> ggplot() +
+  geom_hex(aes(x = sleep_total, y = brainwt), bins = 20, color = "white") +
+  theme_light()
+```
+
+```{r}
+datos |> ggplot() +
+  geom_hex(aes(x = sleep_total, y = brainwt), bins = 20) +
+  scale_fill_viridis_c() +
+  theme_light()
+```
+
+
+
+```{r}
+datos |> ggplot() +
+  geom_density_2d(aes(x = sleep_total, y = brainwt))
+```
+```{r}
+datos |> ggplot() +
+  geom_density_2d(aes(x = sleep_total, y = brainwt), binwidth = 0.04)
+```
+
+```{r}
+datos |> ggplot() +
+  geom_density_2d(aes(x = sleep_total, y = brainwt), binwidth = 0.04) +
+  facet_wrap(~vore) +
+  theme_light()
+```
+```{r}
+datos |> ggplot() +
+  geom_density_2d(aes(x = sleep_total, y = brainwt), binwidth = 0.05) +
+  facet_wrap(~conservation) +
+  theme_light()
+```
+
+```{r}
+datos |> ggplot() +
+  geom_density_2d(aes(x = sleep_rem, y = brainwt), binwidth = 0.04) +
+  facet_wrap(~vore) +
+  theme_light()
+```
+
+```{r}
+datos |> ggplot() +
+  geom_density_2d(aes(x = sleep_cycle, y = brainwt)) +
+  facet_wrap(~vore) +
+  theme_light()
+```
+
+```{r}
+datos |> ggplot() +
+  geom_density_2d(aes(x = sleep_cycle, y = bodywt)) +
+  facet_wrap(~vore) +
+  theme_light()
+```
+
+
+#Hacer graficacion arrastando cosas, es como tablue
+
+```{r}
+library(GWalkR)
+```
+
+
+```{r}
+gwalkr(datos)
+```
+

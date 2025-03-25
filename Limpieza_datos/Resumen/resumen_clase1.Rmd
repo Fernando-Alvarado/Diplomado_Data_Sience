@@ -1,0 +1,91 @@
+---
+title: "Resumen - Clase 1"
+output: html_document
+---
+
+# Resumen de funciones y conceptos: Clase 1
+
+Esta clase introduce el manejo básico de archivos de Excel en R, así como la exploración inicial de datos y el tratamiento de fechas.
+
+---
+
+## 📦 Librerías utilizadas
+
+```{r}
+library(readxl)     # Lectura de archivos .xls y .xlsx
+library(dplyr)      # Manipulación de data frames
+library(ggplot2)    # Visualización de datos
+library(lubridate)  # Manejo de fechas
+library(skimr)      # Exploración estructurada de datasets
+```
+
+---
+
+## 📥 Lectura de archivos Excel
+
+Para leer un archivo Excel se usa `read_xlsx()` especificando el nombre del archivo y la hoja:
+
+```{r}
+datos_ventas <- readxl::read_xlsx("./Data/VentasNum2024.xlsx", sheet = "Ventas")
+```
+
+También se puede cargar otra hoja (por ejemplo, productos):
+
+```{r}
+datos_productos <- readxl::read_xlsx("./Data/VentasNum2024.xlsx", sheet = "Producto")
+```
+
+---
+
+## 🔍 Exploración inicial del dataset
+
+### Estructura general
+
+```{r}
+str(datos_ventas)
+```
+
+### Exploración estructurada con `skim()`
+
+```{r}
+skim(datos_ventas)
+```
+
+Esto entrega un resumen claro con estadísticas básicas, número de NA's, tipos de datos, etc.
+
+---
+
+## 🧪 Extracción de metadatos
+
+El objeto devuelto por `skim()` se puede guardar y manipular:
+
+```{r}
+mi_metadata <- skim(datos_ventas)
+mi_metadata$skim_type  # Tipos de variable
+```
+
+---
+
+## 📅 Manejo de fechas
+
+El archivo contiene columnas como `Fecha Venta` codificadas como texto. Se convierten y se extraen sus componentes:
+
+```{r}
+datos_ventas <- datos_ventas %>%
+  mutate(`Fecha Venta` = as.Date(`Fecha Venta`, format = "%d/%m/%Y")) %>%
+  mutate(
+    MesVenta = lubridate::month(`Fecha Venta`),
+    DiaVenta = lubridate::day(`Fecha Venta`),
+    DiaSemana = lubridate::wday(`Fecha Venta`)
+  )
+```
+
+Esto agrega tres columnas nuevas con:
+
+- Número de mes (`MesVenta`)
+- Día del mes (`DiaVenta`)
+- Día de la semana (`DiaSemana`), donde 1 = domingo, 2 = lunes, etc.
+
+---
+
+Este resumen cubre los primeros pasos esenciales para trabajar con datos reales: importar desde Excel, inspeccionar la estructura del dataset y convertir texto en fechas útiles para análisis posteriores.

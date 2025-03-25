@@ -1,0 +1,103 @@
+---
+title: "Resumen - Sesión 07 (post)"
+output: html_document
+---
+
+# Resumen de funciones y conceptos: Sesión 07 (post)
+
+En esta sesión se abordó el uso de la estructura de control `switch()` en R. Esta función es útil como alternativa a múltiples `if` o `ifelse`, aunque tiene una sintaxis particular y ciertas limitaciones.
+
+---
+
+## 🔁 ¿Qué es `switch()`?
+
+`switch()` permite ejecutar diferentes bloques de código dependiendo del valor de una expresión (generalmente un string).
+
+---
+
+## 📐 Sintaxis general
+
+```r
+switch(EXPR,
+       caso1 = resultado1,
+       caso2 = resultado2,
+       caso3 = resultado3)
+```
+
+- `EXPR`: valor a evaluar (usualmente string o número).
+- `casoX`: nombre del caso a comparar con `EXPR`.
+- `resultadoX`: resultado o código que se ejecuta si hay coincidencia.
+
+---
+
+## 🧪 Ejemplos básicos
+
+```{r}
+switch(EXPR = "dog", 
+       dog = "perrito", 
+       cat = "gatito", 
+       fish = "pececillo")
+```
+
+Devuelve `"perrito"`.
+
+Si no hay coincidencia:
+
+```{r}
+switch(EXPR = "cow", 
+       dog = "perrito", 
+       cat = "gatito", 
+       fish = "pececillo")  # Resultado: NULL
+```
+
+---
+
+## 📊 Ejemplo con métricas estadísticas
+
+```{r}
+mi_vector <- 3:17
+metrica <- "media"
+
+switch(EXPR = metrica,
+       media = mean(mi_vector),
+       mediana = median(mi_vector),
+       maximo = max(mi_vector))
+```
+
+Se puede cambiar `metrica` y se ejecutará la función correspondiente.
+
+---
+
+## ➕ Operaciones aritméticas con `switch()`
+
+```{r}
+x <- 5
+y <- 3
+operacion <- "producto"
+
+resultado <- switch(EXPR = operacion,
+                    "suma" = paste("Addition =", x + y),
+                    "resta" = paste("Subtraction =", x - y),
+                    "cociente" = paste("Division =", x / y),
+                    "producto" = paste("Multiplication =", x * y),
+                    "residuo" = paste("Modulus =", x %% y),
+                    "potencia" = paste("Power =", x ^ y)
+)
+
+resultado
+```
+
+Si se cambia `operacion` por otro valor como `"cuadrado"` (no definido), se devuelve `NULL`.
+
+---
+
+## ⚠️ Consideraciones
+
+- `switch()` en R es más limitado que en otros lenguajes como C o Python.
+- Solo permite coincidencias exactas.
+- Si no encuentra coincidencias, devuelve `NULL` sin mensaje de error.
+
+---
+
+Esta estructura resulta útil para simplificar elecciones múltiples (menús, operaciones matemáticas, selección de funciones estadísticas) en vez de usar muchos `if...else if`.
+

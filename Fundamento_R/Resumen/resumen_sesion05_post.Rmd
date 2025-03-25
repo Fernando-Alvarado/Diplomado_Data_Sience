@@ -1,0 +1,85 @@
+---
+title: "Resumen - Sesión 05 (post)"
+output: html_document
+---
+
+# Resumen de funciones y conceptos: Sesión 05 (post)
+
+Esta sesión se dedicó a estudiar el objeto más utilizado en ciencia de datos con R: el **dataframe**.
+
+---
+
+## 📋 ¿Qué es un dataframe?
+
+- Es una estructura tipo tabla.
+- Cada columna puede tener un tipo distinto (`character`, `numeric`, `logical`, etc.).
+- Todas las entradas en una misma columna deben ser del mismo tipo.
+
+---
+
+## 🧱 Crear un dataframe
+
+Se utiliza la función `data.frame()`:
+
+```{r}
+mi_dataframe <- data.frame(
+  Paciente = c("Ariel", "Susana", "Oscar", "Alex"),
+  Pulso = c(100, 150, 120, 115),
+  Edad = c(60, 30, 45, 28)
+)
+```
+
+---
+
+## 🔍 Exploración de un dataframe
+
+```{r}
+class(mi_dataframe)      # Tipo de objeto
+str(mi_dataframe)        # Estructura interna
+dim(mi_dataframe)        # Dimensiones (filas y columnas)
+nrow(mi_dataframe)       # Número de filas
+ncol(mi_dataframe)       # Número de columnas
+names(mi_dataframe)      # Nombres de columnas
+summary(mi_dataframe)    # Estadísticas resumen
+```
+
+---
+
+## 🎯 Acceso a datos
+
+### Acceso por posición
+
+```{r}
+mi_dataframe[1]        # Primera columna (como dataframe)
+mi_dataframe[2,3]      # Elemento en fila 2, columna 3
+mi_dataframe[1:2,1:2]  # Subconjunto de filas y columnas
+```
+
+### Acceso por nombre
+
+```{r}
+mi_dataframe["Paciente"]        # Como dataframe
+mi_dataframe[["Paciente"]]      # Como vector
+mi_dataframe$Paciente           # Acceso directo
+```
+
+### Acceso múltiple
+
+```{r}
+mi_dataframe[c("Paciente", "Edad")]  # Varias columnas por nombre
+mi_dataframe[c(2, 3)]                # Varias columnas por índice
+mi_dataframe[c(1, 3), c(2, 3)]       # Combinación de filas y columnas
+```
+
+---
+
+## ✅ Resumen de ideas clave
+
+- `data.frame()` permite construir una tabla con columnas heterogéneas.
+- Los dataframes se manipulan fácilmente por nombres de columnas o por posición.
+- Son compatibles con todas las funciones de manipulación (`dplyr`, `tidyr`, etc.).
+- Es crucial saber extraer columnas, renglones y celdas específicas.
+
+---
+
+Este resumen consolida los fundamentos del trabajo con dataframes, base esencial para análisis, visualización y modelado en R.

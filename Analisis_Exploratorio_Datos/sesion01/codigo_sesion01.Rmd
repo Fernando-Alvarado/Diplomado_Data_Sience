@@ -1,0 +1,304 @@
+---
+title: "Sesión 1"
+author: "Eduardo Martínez"
+date: "2025-03-18"
+output: html_document
+---
+
+```{r}
+library(ggplot2)
+library(ggExtra)
+library(corrplot)
+library(dplyr)
+library(magrittr)
+library(palmerpenguins)
+library(visdat)
+library(skimr)
+library(janitor)
+library(moments)
+library(hexbin)
+```
+
+```{r}
+datos <- ggplot2::msleep
+```
+
+```{r}
+datos |> head()
+```
+
+```{r}
+datos$sleep_total |> mean()
+```
+```{r}
+datos %$% mean(sleep_total)
+```
+```{r}
+datos
+```
+
+```{r}
+cor(datos$sleep_total, datos$awake)
+```
+
+```{r}
+datos |> vis_dat()
+```
+
+```{r}
+resumen <- datos |> skimr::skim()
+
+resumen
+```
+
+```{r}
+resumen$skim_type |> unique()
+```
+
+
+```{r}
+datos |> skimr::skim() |> skimr::yank("numeric")
+```
+
+```{r}
+datos |> skimr::skim() |> skimr::yank("character")
+```
+
+```{r}
+df_skewness <- datos |> dplyr::select(where(is.numeric)) |>
+  apply(MARGIN = 2, FUN = moments::skewness, na.rm = TRUE) |>
+  as.data.frame() |> tibble::rownames_to_column()
+
+names(df_skewness) <- c("variable","skewness")
+```
+
+```{r}
+df_skewness
+```
+
+Como lo uno con un dataframe de resumen que ya tengo?, pues con un Join ------------------------------------------------------------------------------------------------------------------------------------
+
+```{r}
+resumen_numericas |> dplyr::left_join(df_skewness, by = c("skim_variable"= "variable"))
+
+```
+```{r}
+resumen_numericas |> dplyr::left_join(df_skewness, by = c("skim_variable" = "variable"))
+```
+
+
+
+```{r}
+df_kurtosis <- datos |> dplyr::select(where(is.numeric)) |>
+  apply(MARGIN = 2, FUN = moments::kurtosis, na.rm = TRUE) |>
+  as.data.frame() |> tibble::rownames_to_column()
+
+names(df_kurtosis) <- c("variable","kurtosis")
+```
+
+
+```{r}
+df_kurtosis
+```
+
+Ya solo me faltaria juntar esta ultima columna
+
+```{r}
+# Proporciones por renglón
+table(msleep$vore, msleep$conservation) |> proportions(margin = 1)
+```
+
+```{r}
+# Proporciones por columna:
+table(msleep$vore, msleep$conservation) |> proportions(margin = 2)
+```
+
+```{r}
+# Proporciones
+table(msleep$vore, msleep$conservation) |> proportions()
+```
+
+```{r}
+datos |> janitor::tabyl(vore, conservation) |>
+  janitor::adorn_totals("row")
+```
+
+```{r}
+datos |> janitor::tabyl(vore, conservation) |>
+  janitor::adorn_totals("col")
+```
+
+```{r}
+datos |> janitor::tabyl(vore, conservation) |> janitor::adorn_percentages("row") |>
+  janitor::adorn_pct_formatting(digits = 2) |>
+  janitor::adorn_ns()
+```
+```{r}
+datos |> janitor::tabyl(vore, conservation) |> janitor::adorn_percentages("col") |>
+  janitor::adorn_pct_formatting(digits = 2) |>
+  janitor::adorn_ns()
+```
+  
+```{r}
+lista_conteos <- datos |> dplyr::select(where(is.character)) |>
+  apply(MARGIN = 2, FUN = table)
+```
+
+```{r}
+lista_conteos[[4]] |> data.frame() |> dplyr::arrange(desc(Freq))
+```
+
+
+
+```{r}
+datos %>%
+  skim() %>%
+  skimr::partition() %$% character
+```
+
+```{r}
+datos %>%
+  skim() %>%
+  skimr::partition() %$% numeric
+```
+
+```{r}
+datos |> ggplot() +
+  geom_histogram(aes(x = sleep_total, y = ..density..),
+                 bins = 40, fill = "blue", alpha = 0.5) +
+  geom_density(aes(x = sleep_total), color = "red", size = 0.5) +
+  theme_light()
+```
+
+```{r}
+datos |> ggplot() +
+  geom_histogram(aes(x = sleep_total, y = ..density..),
+                 bins = 40, fill = "blue", alpha = 0.5) +
+  geom_density(aes(x = sleep_total), color = "red", size = 0.5) +
+  facet_wrap(~vore) +
+  theme_light()
+```
+
+
+```{r}
+datos |> dplyr::select(where(is.numeric)) |>
+  cor(use = "complete.obs") |> corrplot.mixed(order = 'AOE')
+```
+
+```{r}
+datos |> dplyr::select(where(is.numeric)) |>
+  cor(use = "complete.obs")
+```
+
+```{r}
+# Correlación (Relación lineal de toda la vida)
+datos |> dplyr::select(where(is.numeric)) |>
+  cor(use = "complete.obs", method = "pearson") |> corrplot.mixed(order = 'AOE')
+```
+
+```{r}
+# Correlación (Relación monótona)
+datos |> dplyr::select(where(is.numeric)) |>
+  cor(use = "complete.obs", method = "spearman") |> corrplot.mixed(order = 'AOE')
+```
+
+
+```{r}
+datos |> ggplot() +
+  geom_point(aes(x = sleep_total, y = brainwt)) +
+  theme_light()
+```
+
+```{r}
+graf <- datos |> ggplot(aes(x = sleep_total, y = brainwt)) +
+  geom_point() +
+  theme_light()
+
+graf <- ggMarginal(graf, type = "histogram")
+```
+
+```{r}
+graf
+```
+
+```{r}
+graf <- datos |> ggplot(aes(x = sleep_total, y = brainwt, color = vore)) +
+  geom_point() +
+  theme_light()
+
+graf <- ggMarginal(graf, type = "histogram",
+                   groupColour = TRUE,
+                   groupFill = TRUE)
+```
+
+```{r}
+graf
+```
+
+
+```{r}
+datos |> ggplot() +
+  geom_point(aes(x = sleep_total, y = brainwt, color = vore)) +
+  facet_wrap(~vore) +
+  theme_light()
+```
+
+
+
+```{r}
+datos |> ggplot() +
+  geom_hex(aes(x = sleep_total, y = brainwt), bins = 20, color = "white") +
+  theme_light()
+```
+
+```{r}
+datos |> ggplot() +
+  geom_hex(aes(x = sleep_total, y = brainwt), bins = 20) +
+  scale_fill_viridis_c() +
+  theme_light()
+```
+
+
+
+```{r}
+datos |> ggplot() +
+  geom_density_2d(aes(x = sleep_total, y = brainwt))
+```
+```{r}
+datos |> ggplot() +
+  geom_density_2d(aes(x = sleep_total, y = brainwt), binwidth = 0.04)
+```
+
+```{r}
+datos |> ggplot() +
+  geom_density_2d(aes(x = sleep_total, y = brainwt), binwidth = 0.04) +
+  facet_wrap(~vore) +
+  theme_light()
+```
+```{r}
+datos |> ggplot() +
+  geom_density_2d(aes(x = sleep_total, y = brainwt), binwidth = 0.05) +
+  facet_wrap(~conservation) +
+  theme_light()
+```
+
+```{r}
+datos |> ggplot() +
+  geom_density_2d(aes(x = sleep_rem, y = brainwt), binwidth = 0.04) +
+  facet_wrap(~vore) +
+  theme_light()
+```
+
+```{r}
+datos |> ggplot() +
+  geom_density_2d(aes(x = sleep_cycle, y = brainwt)) +
+  facet_wrap(~vore) +
+  theme_light()
+```
+
+```{r}
+datos |> ggplot() +
+  geom_density_2d(aes(x = sleep_cycle, y = bodywt)) +
+  facet_wrap(~vore) +
+  theme_light()
+```

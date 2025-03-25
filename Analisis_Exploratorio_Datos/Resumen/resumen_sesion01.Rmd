@@ -1,0 +1,99 @@
+---
+title: "Resumen - Sesión 01"
+output: html_document
+---
+
+# Resumen de funciones y librerías utilizadas en la Sesión 01
+
+Este documento resume los elementos más importantes utilizados durante la primera sesión del diplomado, incluyendo librerías, funciones clave y su propósito dentro del análisis exploratorio de datos.
+
+---
+
+## 📦 Librerías utilizadas
+
+```{r}
+library(ggplot2)       # Para crear visualizaciones complejas y elegantes con gramática de gráficos.
+library(ggExtra)       # Permite añadir gráficos marginales (como histogramas o boxplots) a gráficos de dispersión hechos con ggplot2.
+library(corrplot)      # Se usa para visualizar gráficamente matrices de correlación.
+library(dplyr)         # Ofrece una gramática intuitiva para manipular y transformar data frames (filtrar, agrupar, resumir, etc.).
+library(magrittr)      # Introduce operadores como %>% (pipe) y %$% para mejorar la legibilidad del código.
+library(palmerpenguins)# Proporciona un dataset amigable y moderno sobre especies de pingüinos como alternativa al clásico 'iris'.
+library(visdat)        # Sirve para visualizar tipos de variables y datos faltantes dentro de un dataset.
+library(skimr)         # Produce resúmenes estadísticos detallados y bien organizados.
+library(janitor)       # Proporciona funciones para limpiar nombres de columnas, tablas y datos.
+library(moments)       # Permite calcular medidas estadísticas como la asimetría (skewness) y curtosis (kurtosis).
+library(hexbin)        # Permite crear gráficos de dispersión con celdas hexagonales para representar densidad.
+```
+
+---
+
+## 📊 Dataset utilizado
+
+Durante esta sesión se utilizó el dataset `msleep`, incluido en el paquete `ggplot2`. Contiene información sobre patrones de sueño y características de varios mamíferos. Se asignó a un objeto llamado `datos`.
+
+```{r}
+datos <- ggplot2::msleep
+```
+
+---
+
+## 🔍 Exploración de datos
+
+### Funciones de inspección inicial
+
+- `head(datos)`: Muestra las primeras filas del dataset para obtener una vista preliminar.
+- `skim(datos)`: Genera un resumen detallado con estadísticas como media, mediana, valores únicos, cantidad de NAs, etc.
+- `vis_dat(datos)`: Crea una visualización de los tipos de datos y muestra valores faltantes.
+
+---
+
+## 📈 Estadísticas descriptivas
+
+### Medidas de tendencia central
+
+- `mean(x)`: Calcula la **media aritmética** de la variable `x`.
+- `median(x)`: Devuelve la **mediana**, útil para distribuciones asimétricas.
+
+```{r}
+mean(datos$sleep_total)
+datos %$% mean(sleep_total)
+median(datos$sleep_total)
+```
+
+### Medidas de dispersión
+
+- `var(x)`: Calcula la **varianza**.
+- `sd(x)`: Devuelve la **desviación estándar**, que mide la dispersión con respecto a la media.
+- `IQR(x)`: Calcula el **rango intercuartil** (Q3 - Q1), útil para detectar valores atípicos.
+- `range(x)`: Entrega el valor mínimo y máximo.
+
+```{r}
+sd(datos$sleep_total)
+IQR(datos$sleep_total)
+range(datos$sleep_total)
+```
+
+### Medidas de forma
+
+- `skewness(x)`: Evalúa la **asimetría** de la distribución.
+- `kurtosis(x)`: Mide la **curtosis** o concentración de los datos en torno a la media.
+
+---
+
+## 📉 Visualización de datos
+
+### Visualización univariada
+
+- `ggplot(datos, aes(x = variable)) + geom_histogram()`: Histograma para ver la distribución de una variable numérica.
+- `geom_boxplot()`: Boxplot para identificar valores extremos y ver la dispersión de los datos.
+
+### Visualización bivariada
+
+- `geom_point()`: Gráfico de dispersión entre dos variables numéricas.
+- `geom_hex()`: Alternativa a `geom_point()` para grandes volúmenes de datos; agrupa puntos en celdas hexagonales.
+- `ggMarginal()`: Agrega gráficos marginales (como histogramas o densidades) a un scatterplot principal.
+- `corrplot(cor(...))`: Visualiza gráficamente la matriz de correlación entre variables numéricas.
+
+---
+
+Este resumen integra las herramientas fundamentales vistas en la sesión 01 para el análisis exploratorio de datos (EDA), desde la inspección inicial hasta visualizaciones y medidas estadísticas más avanzadas.

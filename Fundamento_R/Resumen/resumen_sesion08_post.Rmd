@@ -1,0 +1,79 @@
+---
+title: "Resumen - Sesión 08"
+output: html_document
+---
+
+# Resumen de funciones y conceptos: Sesión 08
+
+Esta sesión introdujo el concepto de **funciones definidas por el usuario** en R. Estas funciones permiten encapsular código para reutilizarlo, mejorar la legibilidad y reducir errores.
+
+---
+
+## 📐 Estructura de una función en R
+
+```r
+nombre_funcion <- function(argumentos) {
+  # cuerpo de la función
+  return(valor_de_salida)
+}
+```
+
+Ejemplo:
+
+```r
+funcion_perim_circulo <- function(r) {
+  2 * pi * r
+}
+```
+
+---
+
+## 🧪 Aplicación y tipos de entrada
+
+```r
+funcion_perim_circulo(r = 2)
+funcion_perim_circulo(2)  # También válido, aunque menos explícito
+```
+
+Las funciones pueden operar sobre vectores si sus operaciones internas son vectorizadas:
+
+```r
+varios_radios <- c(2, 4, 7, 8)
+perimetros <- funcion_perim_circulo(varios_radios)
+```
+
+Esto es posible porque `pi * r` y `2 * pi * r` se comportan de manera **vectorial** en R.
+
+---
+
+## 🔁 Variables locales dentro de funciones
+
+Se puede definir variables internas que no existen fuera de la función:
+
+```r
+funcion_perim_circulo_chafa <- function(r) {
+  pi_chafa <- 3.1416
+  2 * pi_chafa * r
+}
+```
+
+Estas variables **no existen fuera** de la función:
+
+```r
+pi_chafa  # Error: object 'pi_chafa' not found
+```
+
+Este comportamiento se debe a que `pi_chafa` es una **variable local**, es decir, solo vive dentro de la función.
+
+---
+
+## 🔎 Buenas prácticas
+
+- Usa nombres claros y explícitos para tus funciones y argumentos.
+- Documenta si la función acepta vectores, data frames, etc.
+- Define variables auxiliares dentro de la función si no serán reutilizadas fuera.
+- Recuerda siempre el `return()` si el cuerpo tiene más de una instrucción (aunque no es obligatorio si es una sola línea).
+
+---
+
+Esta sesión sienta las bases para construir funciones personalizadas en R, una habilidad esencial para escalar análisis y crear código limpio y reutilizable.

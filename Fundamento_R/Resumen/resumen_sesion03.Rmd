@@ -1,0 +1,91 @@
+---
+title: "Resumen - Sesión 03"
+output: html_document
+---
+
+# Resumen de funciones y conceptos: Sesión 03
+
+Esta sesión introduce el manejo de **matrices en R**, una estructura fundamental para análisis numérico, álgebra lineal y manipulación de datos ordenados.
+
+---
+
+## 🧱 ¿Qué es una matriz en R?
+
+- Una matriz es un arreglo bidimensional con **n filas** y **m columnas**.
+- Todos sus elementos deben ser del **mismo tipo** (númerico, lógico o texto).
+
+Para verificar si un objeto es matriz:
+
+```{r}
+class(objeto)
+str(objeto)
+```
+
+---
+
+## 🧮 Creación de matrices
+
+### 1. Matriz identidad
+
+```{r}
+identidad <- diag(nrow = 5)
+```
+
+Genera una matriz de 5x5 con unos en la diagonal.
+
+---
+
+### 2. Usar `dim()` sobre un vector
+
+```{r}
+a <- rep(0, 10)       # Vector de 10 ceros
+dim(a) <- c(2, 5)     # Convertirlo en matriz 2x5
+```
+
+---
+
+### 3. Usar `matrix()`
+
+```{r}
+m1 <- matrix(data = 1, nrow = 2, ncol = 2)              # Matriz 2x2 con todos unos
+m2 <- matrix(c(2, 6, 7, 8), nrow = 2, ncol = 2)         # Matriz con datos personalizados
+```
+
+---
+
+## 🎯 Acceso y modificación de elementos
+
+- `a[i, j]`: accede al elemento en la fila `i`, columna `j`.
+
+```{r}
+a[2, 3] <- 8           # Modifica posición (2,3)
+a[, 5] <- c(2, 2)      # Modifica toda la columna 5
+```
+
+- Para acceder a toda una fila: `a[1, ]`
+- Para acceder a toda una columna: `a[, 2]`
+
+---
+
+## 🔤 Matrices con strings
+
+```{r}
+b <- matrix(c("Hola", "mundo", "feliz", "a veces"), nrow = 2, ncol = 2)
+```
+
+Si hay una mezcla de tipos (por ejemplo, texto y booleanos), R **forzará todos los elementos al tipo string**:
+
+```{r}
+d <- matrix(c("Hola", TRUE, "feliz", FALSE), nrow = 2, ncol = 2)
+```
+
+---
+
+## ⚠️ Consideraciones
+
+- R convierte todo al tipo más general dentro de la matriz (por jerarquía: `character` > `numeric` > `logical`).
+- Las matrices son diferentes de los data frames: no permiten columnas de tipos diferentes.
+
+---
+
+Este resumen explica cómo se construyen y manipulan matrices en R, incluyendo operaciones básicas, acceso por índice y manejo de tipos.

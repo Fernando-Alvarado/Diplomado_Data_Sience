@@ -1,0 +1,94 @@
+---
+title: "Resumen - Sesión 03 (post)"
+output: html_document
+---
+
+# Resumen de funciones y conceptos: Sesión 03 (post)
+
+En esta sesión se abordaron aspectos fundamentales de la **limpieza de datos**, una etapa crítica en cualquier proyecto de análisis. El objetivo fue identificar y corregir problemas comunes que aparecen al importar datos desde archivos como Excel o CSV.
+
+---
+
+## 📦 Librerías utilizadas
+
+```{r}
+library(readxl)     # Para leer archivos de Excel (.xls, .xlsx)
+library(readr)      # Lectura de archivos CSV
+library(dplyr)      # Manipulación de datos (select, mutate, bind_rows)
+library(ggplot2)    # Visualización (no se usó directamente en esta sesión)
+library(lubridate)  # Manejo de fechas
+library(janitor)    # Limpieza de nombres y estructuras
+```
+
+---
+
+## 📥 Carga de archivos y exploración inicial
+
+Se leyó un archivo de Excel con la función `read_xlsx()`:
+
+```{r}
+datos_ventas <- readxl::read_xlsx("VentasNum2024.xlsx", sheet = "Ventas")
+head(datos_ventas)
+names(datos_ventas)
+```
+
+---
+
+## 🧹 Limpieza de nombres con `janitor::clean_names()`
+
+Problemas comunes con nombres de columnas:
+
+- Tienen espacios.
+- Caracteres especiales o acentos.
+- Uso de mayúsculas y minúsculas inconsistente.
+
+```{r}
+library(janitor)
+datos_ventas <- clean_names(datos_ventas)
+names(datos_ventas)
+```
+
+Esta función convierte los nombres de columna a minúsculas, sin espacios, sin acentos y con guiones bajos (`_`).
+
+---
+
+## 🧪 Comparación de estructuras entre data frames
+
+Cuando se intentan unir múltiples data frames, es común que las columnas no coincidan en nombre o tipo.
+
+Se usaron tres data frames simulados:
+
+```{r}
+df1 <- data.frame(a = 1:2, b = c("grande", "pequeño"))
+df2 <- data.frame(a = 10:12, b = c("mediano", "pequeño", "grande"), c = 0, stringsAsFactors = TRUE)
+df3 <- df1 |> mutate(b = as.character(b))
+```
+
+Para revisar si son compatibles, se usa:
+
+```{r}
+compare_df_cols(df1, df2, df3)
+```
+
+Esta función ayuda a detectar diferencias de estructura antes de intentar unirlos con `bind_rows()` o `rbind()`.
+
+---
+
+## 🧩 Problemas comunes al unir data frames
+
+- Las columnas no tienen el mismo nombre.
+- Las clases de las variables son diferentes (por ejemplo, `factor` vs `character`).
+- Algunas columnas están ausentes en uno u otro dataset.
+
+---
+
+## ✅ Recomendaciones de limpieza
+
+1. **Usar `clean_names()`** al importar cualquier archivo externo.
+2. **Revisar estructuras con `str()` o `compare_df_cols()`** antes de combinar.
+3. **Uniformizar clases con `mutate(across(...))`** si es necesario.
+4. Documentar cada paso para evitar errores acumulados.
+
+---
+
+Este resumen cubre herramientas prácticas para limpiar y armonizar datos, una fase crítica antes de análisis, modelado o visualización.

@@ -1,0 +1,96 @@
+---
+title: "Resumen - Sesión 07"
+output: html_document
+---
+
+# Resumen de funciones y conceptos: Sesión 07
+
+Esta sesión se centró en el trabajo con **datos en formato JSON** utilizando R. JSON (JavaScript Object Notation) es un formato de intercambio de datos ampliamente utilizado por su estructura simple y legible, ideal para aplicaciones web y APIs.
+
+---
+
+## 📦 Librerías utilizadas
+
+```{r}
+library(dplyr)     # Manipulación de datos
+library(ggplot2)   # Visualización de datos
+library(jsonlite)  # Lectura y escritura de archivos JSON
+```
+
+---
+
+## 🧠 Conceptos clave sobre JSON
+
+- JSON almacena información en **pares clave-valor**, similar a listas o diccionarios.
+- Soporta estructuras **anidadas** como listas y objetos.
+- Aunque proviene de JavaScript, es compatible con múltiples lenguajes, incluyendo R.
+- Es útil para almacenar registros complejos y para transmitir datos entre cliente-servidor.
+- JSON es la base de muchas **bases de datos NoSQL**, como MongoDB (que usa BSON, una variante binaria de JSON).
+
+Ejemplo de un objeto JSON:
+
+```json
+{
+  "nombre": "Juan Pérez",
+  "edad": 30,
+  "es_estudiante": false,
+  "cursos": ["Matemáticas", "Biología"],
+  "direccion": {
+    "calle": "Calle Principal 123",
+    "ciudad": "CDMX"
+  }
+}
+```
+
+---
+
+## 🔧 Funciones clave de `jsonlite`
+
+### `fromJSON()`
+
+Convierte una cadena JSON o archivo `.json` a un objeto R (lista, data frame, etc.).
+
+```{r}
+json_text <- '[{"Nombre" : "Mario", "Edad" : 32}, {"Nombre" : "Peach", "Edad" : 30}]'
+data <- jsonlite::fromJSON(json_text)
+```
+
+### `toJSON()`
+
+Convierte un objeto R a una cadena en formato JSON.
+
+```{r}
+toJSON(data, pretty = TRUE)
+```
+
+### Otras opciones útiles
+
+- `flatten = TRUE`: Aplana listas anidadas en `fromJSON()` para facilitar su uso como `data.frame`.
+- `pretty = TRUE`: En `toJSON()`, genera una salida legible con saltos de línea y sangrías.
+
+---
+
+## 🧪 Ejemplo práctico
+
+```{r}
+json <- '[{"Nombre" : "Mario", "Edad" : 32, "Ocupacion" : "Plumber"},
+          {"Nombre" : "Peach", "Edad" : 30, "Ocupacion" : "Princess"}]'
+
+df <- fromJSON(json)
+print(df)
+
+toJSON(df, pretty = TRUE)
+```
+
+---
+
+## 🧩 Aplicaciones
+
+- Consumo de **APIs REST** que devuelven resultados en formato JSON.
+- Interacción con bases de datos **NoSQL** como MongoDB.
+- Almacenamiento flexible de información estructurada y anidada.
+- Exportación de datos R a formatos legibles por otros lenguajes.
+
+---
+
+Este resumen cubre los fundamentos del trabajo con JSON en R, desde su estructura general hasta su procesamiento usando el paquete `jsonlite`, clave para la interoperabilidad entre sistemas en ciencia de datos moderna.

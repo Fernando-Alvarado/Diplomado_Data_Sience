@@ -1,0 +1,129 @@
+---
+title: "Resumen - Sesión 06"
+output: html_document
+---
+
+# Resumen de funciones y conceptos: Sesión 06
+
+En esta sesión se trabajó con la transformación, limpieza y visualización de datos utilizando funciones de `tidyr`, `dplyr`, `lubridate` y `ggplot2`. El análisis se realizó sobre el dataset `billboard`.
+
+---
+
+## 📦 Librerías utilizadas
+
+```{r}
+library(tidyr)       # Para transformar datos entre formatos ancho y largo
+library(ggplot2)     # Para visualizaciones
+library(stringr)     # Manipulación de cadenas de texto
+library(quanteda)    # (No se utilizó en los bloques mostrados, relacionada con texto)
+library(quanteda.textplots) # (También para texto)
+library(dplyr)       # Manipulación y transformación de data frames
+library(lubridate)   # Manejo y transformación de fechas
+```
+
+---
+
+## 📊 Transformación del dataset `billboard`
+
+### 1. Cargar y observar el dataset
+
+```{r}
+datos <- tidyr::billboard
+head(datos)
+```
+
+- El dataset contiene rankings semanales de canciones.
+- Las columnas `wk1`, `wk2`, ..., representan semanas.
+
+---
+
+### 2. Convertir de formato ancho a largo
+
+- Se utiliza `pivot_longer()` para transformar múltiples columnas en filas.
+
+```{r}
+datos_largos <- datos |> tidyr::pivot_longer(
+  cols = starts_with("wk"),
+  names_to = "week",
+  names_prefix = "wk",
+  values_to = "rank",
+  values_drop_na = TRUE
+)
+```
+
+- Se eliminan los prefijos `wk` con `names_prefix`.
+
+---
+
+### 3. Conversión de tipos de datos
+
+```{r}
+datos_largos <- datos_largos |> dplyr::mutate(week = as.numeric(week))
+```
+
+- Convierte la variable `week` (originalmente texto) a numérica para análisis posterior.
+
+---
+
+## 📐 Resumen estadístico de duración en el top 100
+
+Se agrupan los datos por canción para encontrar:
+
+- Cuántas semanas estuvo en lista (`max_sem`)
+- Mejor posición (`min_ranking`)
+- Peor posición (`max_ranking`)
+
+```{r}
+datos_resumen <- datos_largos |> 
+  group_by(artist, track, date.entered) |>
+  summarise(
+    max_sem = max(week), 
+    min_ranking = min(rank), 
+    max_ranking = max(rank)
+  ) |>
+  ungroup()
+```
+
+---
+
+## 🗓 Manejo de fechas
+
+```{r}
+datos_resumen <- datos_resumen |> mutate(dia_anio = lubridate::yday(date.entered))
+```
+
+- Se extrae el **día del año** a partir de la fecha `date.entered`.
+
+---
+
+## 📈 Visualización
+
+### Canciones previas al año 2000
+
+```{r}
+datos_resumen |> 
+  filter(date.entered <= "1999-12-31") |>
+  ggplot() +
+  geom_bar(aes(x = reorder(track, -dia_anio), y = max_sem), stat = "identity") +
+  coord_flip()
+```
+
+- Muestra las canciones ordenadas por fecha de entrada, indicando cuántas semanas estuvieron activas.
+
+### Gráficas anotadas
+
+```{r}
+datos_resumen |> 
+  filter(date.entered > "1999-12-31", date.entered <= "2000-02-28") |> 
+  ggplot() +
+  geom_bar(aes(x = reorder(track, -dia_anio), y = max_sem), stat = "identity", fill = "lightblue") +
+  geom_text(aes(x = track, y = max_sem, label = artist), size = 3) +
+  coord_flip() +
+  theme_light()
+```
+
+- Visualiza la duración en el chart y etiqueta cada barra con el nombre del artista.
+
+---
+
+Este resumen cubre las transformaciones clave de un dataset con múltiples columnas temporales hacia un formato analizable, la extracción de información de fechas, y su representación visual con `ggplot2`. Se introducen prácticas comunes en la limpieza y análisis de series temporales categorizadas.

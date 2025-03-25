@@ -1,0 +1,101 @@
+---
+title: "Resumen - Sesión 04"
+output: html_document
+---
+
+# Resumen de funciones y conceptos: Sesión 04
+
+Esta sesión aborda dos temas fundamentales:
+1. El manejo de fechas importadas desde Excel.
+2. El tratamiento de variables categóricas como factores y la transformación de datos usando `tidyr`.
+
+---
+
+## 📦 Librerías utilizadas
+
+```{r}
+library(ggplot2)   # Visualización de datos
+library(tidyr)     # Transformación de datos (pivot_longer)
+library(readxl)    # (Implícito en funciones de fechas)
+library(janitor)   # Utilidades como top_levels()
+```
+
+---
+
+## 🗓 Manejo de fechas desde Excel
+
+Cuando Excel guarda fechas como números (por ejemplo, 42223), es necesario convertirlas a formato `Date` en R.
+
+### `excel_numeric_to_date()`
+
+Convierte números seriales de Excel a fechas reales en R.
+
+```{r}
+excel_numeric_to_date(41103)                # Fecha básica
+excel_numeric_to_date(41103.01)             # Ignora parte decimal por defecto
+excel_numeric_to_date(41103.01, include_time = TRUE)  # Incluye hora
+excel_numeric_to_date(41103.01, date_system = "mac pre-2011") # Otra codificación
+```
+
+---
+
+### `convert_to_date()` y `convert_to_datetime()`
+
+Funciones más robustas para tratar múltiples formatos de fechas, ideal para archivos con fechas mezcladas o inconsistentes.
+
+```{r}
+convert_to_date(c("2020-02-29", "40000.1"))                # Funciona
+convert_to_date(c("2020-02-29", "26-04-2021"))             # Error por formato
+convert_to_date(c("2020-02-29", "04-26-2021"))             # Formato aceptado
+```
+
+> Nota: No todos los formatos son compatibles, y puede ser necesario estandarizar antes.
+
+---
+
+## 🔤 Factores en R
+
+Las variables categóricas ordenadas se representan como `factor`.
+
+```{r}
+mi_vector <- c("strongly agree", "agree", "neutral", "neutral", 
+               "disagree", "strongly agree", "agree", "neutral", "neutral")
+
+mi_vector <- factor(mi_vector,
+                    levels = c("strongly agree", "agree", "neutral", 
+                               "disagree", "strongly disagree"))
+```
+
+### `top_levels()`
+
+Función útil para ver los niveles más frecuentes:
+
+```{r}
+top_levels(mi_vector)     # Todos los niveles ordenados por frecuencia
+top_levels(mi_vector, n = 1) # Solo el más común
+```
+
+---
+
+## 🔁 Transformación de datos con `pivot_longer()`
+
+Permite pasar de formato **ancho** a **largo**, útil cuando las columnas representan valores de una misma variable en distintos periodos.
+
+```{r}
+df <- data.frame(estudiante = c('Pedro', 'Pablo', 'Lorena', 'Eugenia'),
+                 mes1 = c(8, 10, 6, 5),
+                 mes2 = c(9, 4, 7, 8))
+
+df_largo <- df |> tidyr::pivot_longer(
+  cols = c('mes1', 'mes2'),
+  names_to = 'periodo',
+  values_to = 'calificacion'
+)
+```
+
+- `names_to`: nuevo nombre para las columnas convertidas.
+- `values_to`: nuevo nombre para los valores asociados.
+
+---
+
+Esta sesión cubre aspectos esenciales del tratamiento de datos reales: conversión de formatos inconsistentes y estructuras categóricas, junto con técnicas fundamentales para limpiar y reorganizar datasets.

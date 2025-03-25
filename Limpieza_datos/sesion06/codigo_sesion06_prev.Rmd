@@ -246,14 +246,20 @@ anscombe
 datos_anscombe <- anscombe %>%
   pivot_longer(
     everything(),
-    names_to = c(".value", "set"),
-    names_pattern = "(.)(.)"
+    names_pattern = "(.)(.)",
+    names_to = c(".value", "set")
+    
   )
 ```
+
+Pauete basico de estadistica, donde tiene misma dedidas estadisticas
 
 ```{r}
 datos_anscombe
 ```
+
+vamos a graficar estas parejas por grupos
+
 
 ```{r}
 datos_anscombe |> ggplot() +
@@ -263,9 +269,15 @@ datos_anscombe |> ggplot() +
 ```
 
 ```{r}
-datos_anscombe |> dplyr::group_by(set) |> summarise(x_media = mean(x), y_media = mean(y), x_var = var(x), y_var = var(y), covarianza = cov)
+datos_anscombe |> dplyr::group_by(set) |> summarise(x_media = mean(x), y_media = mean(y), x_var = var(x), y_var = var(y), covarianza = cov(x,y))
 ```
 
+```{r}
+#corrplot::corrplot(datos_anscombe)
+```
+
+
++ Este cuarteto tiene una utilidas mas didactic a que practica, ya que la regresion lineal no es todo
 
 ```{r}
 datos_ventas <- data.frame(
@@ -288,9 +300,16 @@ df <- data.frame(estudiante = rep(c('Ariana', 'Daniel'), each=4),
 
 df
 ```
+
+Vamos a convertir de una tabla ancha a una tabla ancha 
+
+
 ```{r}
 df |> tidyr::pivot_wider(names_from = semestre, values_from = calif)
 ```
+
+Veamos un ultimo ejemplo
+
 
 ```{r}
 df <- data.frame(
@@ -299,6 +318,9 @@ df <- data.frame(
 
 df
 ```
+
+Le agregare una columna que representara alguna medicion que no interese, de forma aleatoria
+
 
 ```{r}
 set.seed(06032025)
@@ -310,10 +332,13 @@ df <- df |> mutate(medicion = 100*runif(n()))
 df
 ```
 
+Dew nuevo, convirtiendo desta tabla larga a una ancha
+
 ```{r}
 df |> pivot_wider(names_from = "mes", values_from = "medicion")
 ```
 
+ ## Ejemplitos de tarea, es lo mismo que arribapara que los corramos nosotros
 
 ```{r}
 fish_encounters
@@ -343,6 +368,9 @@ us_rent_income %>%
 ```
 
 
+## -----------------------------------------------------------------
+
+
 ```{r}
 df <- data.frame(estudiante = c('Berenice', 'Berenice', 'Leo', 'Leo', 'Frida', 'Frida'),
                  anio = c(2024, 2025, 2024, 2025, 2024, 2025),
@@ -352,9 +380,15 @@ df <- data.frame(estudiante = c('Berenice', 'Berenice', 'Leo', 'Leo', 'Frida', '
 df
 ```
 
+
+ vamos a hacer una mala practica en datos que no se debe hacer pero que es muy comun en el manejo de datos, vamos a pegar los valores de varias columnas 
+ 
+ se hace con la funcion unite
 ```{r}
 df |> tidyr::unite(c('puntos', 'retardos'), col = 'puntos_y_retardos', sep='-')
 ```
+
+vamos agregar una columna de reportes  a este dataframe 
 
 ```{r}
 df <- df |> mutate(reportes = c(2, 3, 3, 2, 1, 0))
@@ -362,14 +396,27 @@ df <- df |> mutate(reportes = c(2, 3, 3, 2, 1, 0))
 df
 ```
 
+
+
+haciendo otra cochinad aun mas grande
+
 ```{r}
 df |> tidyr::unite(c('puntos', 'retardos', 'reportes'), col='mounstrosa', sep='/')
 ```
+
+Asi como puedo "pegar", los valores de las columnas, tambien puedo separarlas y en mi opicion es mas util y mas comun 
+
+en la celda viene lalo/hombre/vegetariano y yo lo quiero separar en 3 columnas
+
+- tambien puedo importar informacion csv de una url
+
 
 ```{r}
 url <- "https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2022/2022-01-25/details.csv"
 datos <- readr::read_csv(url)
 ```
+
++   Veamos un poquito de este dataset 
 
 ```{r}
 datos |> head()
@@ -379,6 +426,8 @@ datos |> head()
 datos |> select(id, primary, boardgamecategory)
 ```
 
+Podemos ver que hay juegos con multiples categorias
+
 ```{r}
 datos <- datos |> select(id, primary, boardgamecategory)
 ```
@@ -386,14 +435,16 @@ datos <- datos |> select(id, primary, boardgamecategory)
 ```{r}
 datos |> head()
 ```
-
+ + le dijo donde quiero ahcer la separacion de palabas
 
 ```{r}
 datos |> separate_longer_delim(cols = boardgamecategory, delim = ", ")
 ```
 
+Sifue sin gustamer la columna boardercategory, ya que la columna no esta limpia, todavia tiene caracteres feos
+
 ```{r}
-library(stringr)
+library(stringr) #Libreria para hacer limpieza de datos 
 ```
 
 ```{r}
@@ -402,10 +453,12 @@ patron <- c(`[` = "", `]` = "", `"` = "", `'` = "") |> coll()
 
 ```{r}
 datos |> separate_longer_delim(cols = boardgamecategory, delim = ", ") |>
-  dplyr::mutate(boardgamecategory_limpio = 
+  dplyr::mutate(boardgamecategory_limpio =  #Creo que nueva coluna, donde los patrones de arriba los sustituya po nada
            stringr::str_replace_all(boardgamecategory, pattern = patron)
          )
 ```
+
+Por supuesto tambien podemos pasarlo de semilargo a largo 
 
 ```{r}
 datos <- data.frame(anio = c(2024, 2024, 2025),
@@ -413,6 +466,8 @@ datos <- data.frame(anio = c(2024, 2024, 2025),
 
 datos
 ```
+
+vamos a limpiar esta tabla
 
 ```{r}
 datos |> separate_wider_delim(cols = inventario, delim = ",",

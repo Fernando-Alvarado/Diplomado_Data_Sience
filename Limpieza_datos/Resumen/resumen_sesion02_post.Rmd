@@ -1,0 +1,110 @@
+---
+title: "Resumen - Sesión 02 (post)"
+output: html_document
+---
+
+# Resumen de funciones y conceptos: Sesión 02 (post)
+
+En esta sesión se abordó el análisis geográfico de datos económicos, específicamente la creación de un **mapa de ganancias por estado** en Estados Unidos, utilizando datos cargados desde Excel.
+
+---
+
+## 📦 Librerías utilizadas
+
+```{r}
+library(readxl)       # Para leer archivos de Excel (.xls, .xlsx)
+library(dplyr)        # Manipulación de datos (select, mutate, summarise, join)
+library(ggplot2)      # Visualización de datos
+library(lubridate)    # Manejo de fechas
+library(maps)         # Mapas base de estados de EE.UU.
+library(ggrepel)      # Añadir etiquetas sin que se encimen
+```
+
+---
+
+## 📂 Carga del dataset
+
+```{r}
+data_superstore <- readxl::read_xls("Sample - Superstore.xls")
+head(data_superstore)
+```
+
+El archivo contiene ventas, ganancias y otra información por estado. Se extrae el total de **ganancias por estado**:
+
+```{r}
+data_por_estado <- data_superstore %>%
+  select(State, Profit) %>%
+  group_by(State) %>%
+  summarise(ganancia = sum(Profit)) %>%
+  ungroup()
+```
+
+---
+
+## 🗺 Visualización geográfica
+
+### Datos de mapa base
+
+Se usa `map_data("state")` para obtener coordenadas de los estados de EE.UU.:
+
+```{r}
+MainStates <- map_data("state")
+```
+
+Contiene una columna `region` que representa los nombres de los estados en minúsculas.
+
+---
+
+### Preparación de datos para unir
+
+Se convierte la columna `State` de `data_por_estado` a minúsculas para poder hacer `inner_join()`:
+
+```{r}
+data_por_estado <- data_por_estado %>%
+  mutate(region = tolower(State)) %>%
+  inner_join(MainStates, by = "region")
+```
+
+---
+
+## 🖼 Mapa de ganancias
+
+### Mapa con `geom_polygon()`
+
+```{r}
+data_por_estado %>% ggplot() + 
+  geom_polygon(aes(x = long, y = lat, group = group, fill = ganancia),
+               color = "white", linewidth = 0.2) +
+  scale_fill_gradient2(low = "orange", mid = "lightskyblue3", high = "dodgerblue4", midpoint = 0) +
+  theme_light() +
+  theme(axis.text = element_blank(), axis.ticks = element_blank(), axis.title = element_blank())
+```
+
+- Se usa `fill = ganancia` para pintar por intensidad.
+- `midpoint = 0` centra el degradado de colores entre pérdidas y ganancias.
+
+---
+
+## 🏷 Añadir etiquetas con `ggrepel`
+
+Primero, se calcula el centro de cada estado:
+
+```{r}
+df_para_etiquetas <- MainStates %>%
+  group_by(region) %>%
+  summarise(long = median(long), lat = median(lat))
+```
+
+Se agregan etiquetas:
+
+```{r}
+data_por_estado %>% ggplot() + 
+  geom_polygon(...) +
+  geom_label_repel(data = df_para_etiquetas, aes(x = long, y = lat, label = region),
+                   color = "dodgerblue4", size = 2) +
+  theme_light()
+```
+
+---
+
+Este ejercicio integra **lectura de archivos reales**, transformación de datos y **visualización geográfica** avanzada, siendo útil para dashboards o reportes ejecutivos de desempeño regional.
