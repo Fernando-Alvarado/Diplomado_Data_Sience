@@ -1,0 +1,272 @@
+---
+title: "Tarea 1"
+author: "Fernando Alvarado Palacios"
+date: "30/03/2025"
+output: html_document
+---
+
+```{r}
+library(lubridate)
+```
+
+
+Convierte las siguientes cadenas de fechas en objetos de fecha-hora utilizando funciones de lubridate.
+
+
+
+```{r}
+fechas <- c("2025-03-28", "03/28/2025", "28-Mar-2025")
+fechas_convertidas <- parse_date_time(fechas, orders = c("ymd", "mdy", "d-b-Y")) # Usa la función adecuada de lubridate
+print(fechas_convertidas)
+```
+
+
+
+
+Extrae el año, mes, día, hora, minuto y segundo del siguiente objeto de fecha-hora.
+
+```{r}
+
+dt <- ymd_hms("2025-03-28 14:45:30")
+anio <- year(dt)   # Extraer el año
+mes <- month(dt, label=TRUE)    # Extraer el mes
+dia <- wday(dt)    # Extraer el día
+hora <- hour(dt) # Extraer la hora
+minuto <- minute(dt) # Extraer el minuto
+segundo <- second(dt) # Extraer el segundo
+
+print(c(anio, mes, dia, hora, minuto, segundo))
+```
+
+
+Modifica el siguiente objeto de fecha-hora cambiando el año a 2030, el mes a diciembre y el día a 25.
+
+```{r}
+
+dt <- ymd_hms("2025-03-28 14:45:30")
+year(dt) <- 2030     # Modificando  el año
+month(dt) <- 12      # Modificando el mes a diciembre
+day(dt) <- 25        # Modificando al 25 de diciembre
+print(dt)
+```
+
+
+Calcula el número de días entre dos fechas.
+
+```{r}
+
+fecha1 <- ymd("2025-03-28")
+fecha2 <- ymd("2030-12-25")
+diferencia_dias <- fecha2-fecha1 # Calcular la diferencia en días
+print(diferencia_dias)
+```
+
+
+Crea una secuencia de fechas desde 2025-03-01 hasta 2025-03-31, aumentando de 2 en 2 días.
+
+
+```{r}
+fecha_inicio <- ymd("2025-03-01")
+fecha_fin <- ymd("2025-03-31")
+secuencia_fechas <- seq(from = fecha_inicio, to= fecha_fin, by= "2 days") # Generar la secuencia
+print(secuencia_fechas)
+```
+
+
+Determina si los años del 2020 al 2030 son bisiestos.
+```{r}
+anios <- 2020:2030
+bisiestos <- ??? # Verificar qué años son bisiestos
+print(bisiestos)
+```
+
+
+
+A partir de "2025-03-28 14:45:30", suma 3 meses, resta 15 días y agrega 5 horas.
+```{r}
+dt <- ymd_hms("2025-03-28 14:45:30")
+dt <- dt +months(3) # Sumar 3 meses
+dt <- dt + days(15) # Restar 15 días
+dt <- dt + hours(5) # Sumar 5 horas
+print(dt)
+```
+
+
+
+Determina el nombre del día de la semana de las siguientes fechas: "2025-03-28", "2026-07-15", "2027-01-01".
+```{r}
+fechas <- ymd(c("2025-03-28", "2026-07-15", "2027-01-01"))
+dias_semana <- wday(fechas) # Obtener el nombre del día de la semana
+print(dias_semana)
+```
+
+
+
+Convierte "2025-03-28 14:45:30" de la zona horaria "America/New_York" a "Europe/London".
+Editar
+```{r}
+dt <- ymd_hms("2025-03-28 14:45:30", tz = "America/New_York")
+dt_londres <- with_tz(dt, tzone = "Europe/London") # Convertir a la hora de Londres
+print(dt_londres)
+```
+
+
+
+Calcula la edad de una persona nacida el "1990-05-15" a la fecha "2025-03-28".
+```{r}
+fecha_nacimiento <- ymd("1990-05-15")
+fecha_referencia <- ymd("2025-03-28")
+a <- (fecha_referencia - fecha_nacimiento) / dyears(1) # Calcular la edad
+edad <- floor(a)  
+print(edad)
+
+```
+
+El dataset flights tiene las columnas year, month, day, hour y minute.
+Crea una nueva columna departure_time en formato fecha-hora (POSIXct).
+```{r}
+library(nycflights13)
+library(lubridate)
+library(dplyr)
+
+```
+
+```{r}
+flights <- flights %>%
+  mutate(
+    hour = dep_time %/% 100,
+    minute = dep_time %% 100,
+    departure_time = make_datetime(year, month, day, hour, minute)
+  )
+
+head(flights$departure_time)
+```
+
+
+
+
+Extrae el año, mes, día, hora y minuto de la nueva columna departure_time y crea nuevas columnas con estos valores.
+```{r}
+flights <- flights %>%
+  mutate(
+    dep_year = year(departure_time),  # Extraer el año
+    dep_month = month(departure_time), # Extraer el mes
+    dep_day = wday(departure_time),   # Extraer el día
+    dep_hour = hour(departure_time),  # Extraer la hora
+    dep_minute = minute(departure_time) # Extraer los minutos
+  )
+
+head(flights[, c("departure_time", "dep_year", "dep_month", "dep_day", "dep_hour", "dep_minute")])
+```
+
+
+
+
+Las columnas dep_time y arr_time representan la hora de salida y llegada, y air_time indica el tiempo de vuelo en minutos.
+Verifica si la diferencia entre arr_time y dep_time coincide con air_time.
+
+```{r}
+flights <- flights %>%
+  mutate(
+    hour = arr_time %/% 100,
+    minute = arr_time %% 100,
+    arrival_time = make_datetime(year, month, day, hour, minute),
+    calculated_air_time = arrival_time - departure_time  # Calcular tiempo de vuelo
+  )
+
+
+head(flights[, c("departure_time", "arrival_time", "air_time", "calculated_air_time")])
+```
+
+
+Crea una nueva columna con el nombre del día de la semana en que salió el vuelo.
+
+```{r}
+flights <- flights %>%
+  mutate(weekday =  wday(departure_time, label = TRUE, abbr = FALSE)) # Obtener el nombre del día de la semana
+
+head(flights[, c("departure_time", "weekday")])
+
+```
+
+Filtra los vuelos que salieron un sábado o domingo.
+```{r}
+weekend_flights <- flights %>%
+  filter(weekday %in% c("sábado", "domingo")) # Condición para filtrar sábado y domingo
+
+nrow(weekend_flights) # Contar los vuelos de fin de semana
+
+
+```
+
+
+
+
+Las columnas dep_delay y arr_delay muestran los retrasos en minutos.
+Crea nuevas columnas con estos valores expresados en horas y minutos.
+```{r}
+flights <- flights %>%
+  mutate(
+     dep_delay_hm = hm(sprintf("%02d:%02d", dep_delay %/% 60, abs(dep_delay) %% 60)), # Convertir dep_delay a horas:minutos
+    arr_delay_hm = hm(sprintf("%02d:%02d", arr_delay %/% 60, abs(arr_delay) %% 60))# Convertir arr_delay a horas:minutos
+  )
+
+head(flights[, c("dep_delay", "dep_delay_hm", "arr_delay", "arr_delay_hm")])
+```
+
+
+
+
+Filtra los vuelos que salieron entre las 10 PM y las 5 AM.
+```{r}
+night_flights <- flights %>%
+  filter(dep_hour >= 22 | dep_hour < 5)
+
+nrow(night_flights) # Contar vuelos nocturnos
+```
+
+
+Agrupa por mes y calcula la duración promedio de los vuelos en minutos.
+```{r}
+avg_flight_time <- flights %>%
+  group_by(month) %>%
+  summarize(avg_duration =  mean(as.numeric(calculated_air_time), na.rm = TRUE))
+
+print(avg_flight_time)
+```
+
+
+```{r}
+
+head(flights)
+
+
+```
+
+Simula un escenario donde todos los vuelos se retrasan 30 minutos.
+```{r}
+flights <- flights %>%
+  mutate(new_departure_time = departure_time + minutes(30)) # Sumar 30 minutos
+
+head(flights[, c("departure_time", "new_departure_time")])
+```
+
+
+Calcula cuántos días han pasado desde la fecha de cada vuelo hasta la fecha actual.
+```{r}
+flights <- flights %>%
+  mutate(days_since_flight = floor(Sys.time() - departure_time))
+
+head(flights[, c("departure_time", "days_since_flight")])
+```
+
+
+
+
+
+
+
+
+
+
+
