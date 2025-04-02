@@ -1,6 +1,6 @@
 # Ignorar archivos HTML generados por RMarkdown
 *.html
-
+*.pdf
 # Ignorar archivos de caché y otros archivos temporales
 *.log
 *.out
