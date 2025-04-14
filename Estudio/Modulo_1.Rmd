@@ -1,0 +1,724 @@
+---
+title: "Estudio_Mod_1"
+author: "Fernando Alvarado"
+date: "2025-04-14"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Resumen de codigo R, de mi diplomado de ciecia de datos 
+
+
+
+## 📦 base (Funciones básicas de R para secuencias, matrices y estructuras)
+
+- `seq()`: Genera secuencias numéricas. Por ejemplo, `seq(1, 5, 0.5)` crea una secuencia de 1 a 5 en incrementos de 0.5.
+- `rep()`: Repite valores. `rep(c(1,3,8), times = 7)` repite todo el vector 7 veces.
+- `sequence()`: Devuelve una secuencia continua basada en un vector de enteros. `sequence(c(10,5))` genera una secuencia del 1 al 10 y luego del 1 al 5.
+- `dim() <-`: Asigna dimensiones a un vector para convertirlo en matriz. `dim(a) <- c(2,5)` convierte un vector en una matriz de 2 filas y 5 columnas.
+- `class()`: Muestra la clase (tipo de objeto) de un elemento. Útil para verificar si es vector, matriz, lista, etc.
+- `str()`: Muestra la estructura de un objeto, muy útil para inspección rápida.
+- `matrix()`: Crea una matriz. `matrix(data = c(...), nr = x, nc = y)` genera una matriz con datos, filas (`nr`) y columnas (`nc`).
+- `a[i,j] <- valor`: Asigna un valor a una posición específica de una matriz.
+
+
+
+## 📦 utils/base (Gestión de paquetes)
+
+- `install.packages("nombre")`: Instala un paquete desde CRAN. Solo se necesita hacer una vez por instalación.
+- `library(nombre)`: Carga el paquete para poder usar sus funciones en la sesión actual.
+
+
+
+
+## 📦 base (Manipulación de matrices, tipos y coerciones)
+
+- `as.numeric(x)`: Convierte un valor a numérico. Si no se puede (como `"Hola"`), regresa `NA`.
+- `as.character(x)`: Convierte valores numéricos a texto (string).
+- `matrix(data, nrow, ncol)`: Crea una matriz con los datos, especificando filas y columnas.
+- `a[i, j]`: Accede o modifica la entrada de una matriz en la fila `i` y columna `j`.
+- `%*%`: Realiza multiplicación matricial (álgebra lineal). No confundir con `*` que es multiplicación entrada por entrada.
+- `+` entre matrices: Suma elemento a elemento (si tienen la misma dimensión).
+
+
+
+
+## 📦 base (Operaciones adicionales con matrices y listas)
+
+- `solve(x)`: Calcula la inversa de una matriz (si existe). Por ejemplo, `solve(mat2)` retorna la matriz inversa de `mat2`.
+- `rbind(x, y)`: Une matrices por renglones (una encima de la otra).
+- `cbind(x, y)`: Une matrices por columnas (una al lado de la otra).
+- `list(...)`: Crea una lista, que permite contener objetos de distintos tipos (números, textos, vectores, matrices, etc.).
+- `length(x)`: Devuelve la cantidad de elementos/componentes de una lista.
+- `x[[i]]`: Accede al **objeto contenido** en la componente `i` de una lista.
+- `x[i]`: Extrae la **sublista** con la componente `i`, mantiene estructura de lista.
+- `x$nombre`: Accede directamente al objeto en la componente nombrada `"nombre"` de la lista.
+- `c(x, y)`: Concatena listas (o vectores).
+- `unlist(x)`: Convierte una lista a un vector plano.
+
+
+
+
+## 📦 purrr (Programación funcional con listas y vectores)
+
+- `map_dbl(.x, .f)`: Aplica una función a cada elemento de una lista o vector, devolviendo un vector numérico. Es útil cuando se espera un resultado `double` y se quiere evitar listas.
+- `compose(...)`: Crea funciones compuestas, ejecutando de derecha a izquierda. Por ejemplo, `compose(sqrt, abs)` aplica primero `abs()` y luego `sqrt()`.
+
+
+
+
+## 📦 base (Control de flujo y generación de secuencias)
+
+- `seq_along(x)`: Genera una secuencia desde 1 hasta la longitud de `x`. Útil en `for` cuando no se conoce la longitud exacta del objeto.
+- `seq_len(n)`: Crea una secuencia del 1 al número `n`. Se usa para iterar conociendo la cantidad de elementos.
+- `while(cond) { ... }`: Ejecuta un bloque de código mientras la condición `cond` sea verdadera.
+- `next`: Salta a la siguiente iteración dentro de un bucle.
+- `break`: Rompe la ejecución del bucle actual.
+
+---
+
+## 📦 purrr (Iteración funcional avanzada)
+
+- `map(.x, .f)`: Aplica una función `.f` a cada elemento de `.x`, devolviendo una lista. Útil para aplicar funciones personalizadas o integradas como `summary`, `toupper`, etc.
+- `map_dbl(.x, .f)`: Igual que `map()`, pero devuelve un vector numérico (`double`) en lugar de lista.
+- `compose(f1, f2, ...)`: Crea una función compuesta que aplica primero la última (`fN`) y termina con la primera (`f1`). Ideal para encadenar transformaciones sin definir funciones intermedias.
+
+
+
+```{r}
+## Ejemplo de `map()` con purrr
+
+# Cargamos purrr
+library(purrr)
+
+# Vector de nombres
+nombres <- c("juan", "maria", "pedro")
+
+# Aplicamos la función toupper a cada elemento del vector
+resultado <- map(nombres, toupper)
+
+# Mostramos resultado
+resultado
+
+```
+
+
+
+# Librerías para visualización
+
++ [R Base](https://rstudio-pubs-static.s3.amazonaws.com/7953_4e3efd5b9415444ca065b1167862c349.html)
++ [ggplot2](https://ggplot2.tidyverse.org/)
++ [plotly](https://plot.ly/r/)
++ [lattice](http://lattice.r-forge.r-project.org/Vignettes/src/lattice-intro/lattice-intro.pdf)
++ [rCharts](https://ramnathv.github.io/rCharts/)
++ [corrplot](https://cran.r-project.org/web/packages/corrplot/vignettes/corrplot-intro.html)
++ [rbokeh](http://hafen.github.io/rbokeh/index.html)
++ [leaflet](https://rstudio.github.io/leaflet/)
++ [highcharter](http://jkunst.com/highcharter/)
++ [ggiraph](https://davidgohel.github.io/ggiraph/index.html)
++ [gganimate](https://github.com/thomasp85/gganimate)
++ [gghighlight](https://cran.r-project.org/web/packages/gghighlight/vignettes/gghighlight.html)
++ [dygraphs](https://rstudio.github.io/dygraphs/index.html)
++ [trelliscopejs](https://github.com/hafen/trelliscopejs)
++ [esquisse](https://github.com/dreamRs/esquisse)
+
+# La interacción siempre vende
+
++ [Shiny](https://shiny.rstudio.com/gallery/)
++ [Shiny](https://shiny.rstudio.com/gallery/see-more.html)
++ [Shiny dashboards](https://rstudio.github.io/shinydashboard/index.html)
++ [Flexdashboard](https://rmarkdown.rstudio.com/flexdashboard/examples.html)
+
+
+
+## 📦 ggplot2 (Visualización de datos)
+
+- Crea gráficos personalizados y profesionales de forma declarativa usando `ggplot() + geom_*()`.
+
+## 📦 readr (Lectura eficiente de datos)
+
+- Permite importar archivos `.csv`, `.tsv`, y más con funciones como `read_csv()` (no usada aún en el código).
+
+## 📦 dplyr (Manipulación de datos)
+
+- Facilita tareas como filtrar (`filter()`), seleccionar (`select()`), mutar (`mutate()`), agrupar (`group_by()`), resumir (`summarise()`), entre muchas otras.
+
+## 📦 palmerpenguins (Conjunto de datos)
+
+- Proporciona datos sobre especies de pingüinos en la Antártida. Ideal para ejemplos de análisis y visualización.
+
+
+
+
+```{r}
+## Ejemplo sencillo con palmerpenguins
+
+library(ggplot2)
+library(dplyr)
+library(palmerpenguins)
+
+# Usamos el dataset 'penguins' incluido en el paquete
+datos <- penguins |> filter(!is.na(body_mass_g), !is.na(flipper_length_mm))
+
+# Creamos una gráfica de dispersión básica
+ggplot(datos, aes(x = body_mass_g, y = flipper_length_mm)) +
+  geom_point(color = "steelblue") +
+  labs(title = "Relación entre masa corporal y longitud del ala",
+       x = "Masa corporal (g)",
+       y = "Longitud del ala (mm)") +
+  theme_minimal()
+
+```
+## 📦 palmerpenguins — Ejemplo con `penguins`
+
+- Se filtran los datos para remover valores `NA` en `body_mass_g` y `flipper_length_mm`.
+- Se hace una gráfica con `ggplot2` mostrando la relación entre masa corporal y longitud del ala de los pingüinos.
+- `geom_point()` genera una dispersión con color azul, y se aplican etiquetas y tema minimalista.
+
+
+
+
+## 📦 base (Creación y manipulación de dataframes)
+
+- `data.frame(...)`: Crea un dataframe con columnas de distintos tipos (números, texto, etc.).
+- `str(x)`: Muestra la estructura de un dataframe, útil para revisar tipos de datos.
+- `dim(x)`, `nrow(x)`, `ncol(x)`: Devuelven dimensiones, número de filas y columnas respectivamente.
+- `names(x)`: Muestra o modifica los nombres de las columnas.
+- `summary(x)`: Da un resumen estadístico general del contenido del dataframe.
+- `x[i, j]`, `x["col"]`, `x[["col"]]`, `x$col`: Formas de acceder a columnas o celdas específicas.
+- `cbind(df, nueva_col)`: Agrega columnas a un dataframe existente.
+- `rbind(df, nuevo_row)`: Agrega filas a un dataframe.
+
+## 📦 base (Más formas de crear y convertir dataframes)
+
+- `x$col <- ...`: Crea y asigna una nueva columna en un dataframe usando el operador `$`.
+- `as.data.frame(x)`: Convierte un objeto (como una matriz) en un dataframe.
+
+---
+
+## 📦 ggplot2movies (Dataset de películas)
+
+- `movies`: Dataset incluido con información de más de 58 mil películas (título, año, género, calificación, etc.).
+- `head(x, n)`: Muestra los primeros `n` renglones de un dataframe.
+- `tail(x, n)`: Muestra los últimos `n` renglones de un dataframe.
+- `help(movies)`: Muestra la documentación del dataset si está disponible.
+
+---
+
+## 📦 dplyr (Manipulación de renglones con pipes)
+
+- `slice(df, i:j)`: Extrae un subconjunto de renglones del dataframe desde `i` hasta `j` usando el pipe `%>%`.
+
+
+
+## 📦 dplyr — Verbos esenciales para manipular dataframes
+
+La librería `dplyr` permite manipular dataframes de manera intuitiva, legible y eficiente. Es especialmente útil en análisis de datos donde se trabaja mucho con tablas.
+
+A continuación se explican sus cinco verbos fundamentales:
+
+---
+
+### 🔹 1. `arrange()`: Ordenar filas
+
+**¿Qué hace?**  
+Ordena los renglones de un dataframe en función de una o varias columnas.
+
+**¿Cuándo se usa?**  
+Cuando queremos ver los datos ordenados por algún criterio, ya sea numérico (por ejemplo, de menor a mayor edad) o alfabético (por ejemplo, ordenar por nombre).
+
+**¿Para qué se usa?**  
+Para facilitar la exploración, para obtener valores extremos (los más altos o bajos), o simplemente para ordenar resultados antes de visualizarlos.
+
+**Ejemplos:**
+
+
+```{r}
+# Ordenar por la columna length de menor a mayor
+library(palmerpenguins)
+datos <- penguins
+
+datos %>% arrange(datos$flipper_length_mm ) |> head()
+
+# Ordenar alfabéticamente por título (columna de tipo texto)
+datos %>% arrange(datos$species) |> head()
+
+# Ordenar de mayor a menor por la columna length
+datos %>% arrange(desc(datos$flipper_length_mm)) %>% head()
+```
+
+
+### Paréntesis
+
++ Como insertar un renglón en una posición que yo quiero
+
+```{r}
+df <- data.frame(team=c('A', 'A', 'A', 'A', 'B', 'B', 'B', 'B'),
+                 points=c(99, 68, 86, 88, 95, 74, 78, 93),
+                 assists=c(22, 28, 31, 35, 34, 45, 28, 31),
+                 rebounds=c(30, 28, 24, 24, 30, 36, 30, 29))
+
+df
+```
++ Primera forma: Horrible (R base)
+
+```{r}
+nuevo_vector <- c("D", 1, 4, 6, 8)
+nuevo_vector
+```
++ Ocuperemos la función rbind()
+
+```{r}
+posicion_favorita <- 3
+```
+
+```{r}
+rbind(df[1:(posicion_favorita-1),], # todos los renglones antes de la posición
+      nuevo_vector, # nuevo renglon
+      df[-(1:(posicion_favorita-1)),]) # resto de los renglones
+```
+
++ Forma terrible!!! Tendría ahora que arreglar el tema de los índices de los renglones
+
++ Forma limpia... Con una función de la librería {dplyr}
+
+```{r}
+df %>% dplyr::add_row(team='C', points=90, assists=40, rebounds=20, .before=posicion_favorita)
+```
+
+
+## 📦 dplyr — Verbo `select()`: seleccionar columnas
+
+### 🔹 2. `select()`: Elegir columnas específicas
+
+**¿Qué hace?**  
+Permite seleccionar columnas de un dataframe por nombre, posición o patrón.
+
+**¿Cuándo se usa?**  
+Cuando queremos trabajar solo con ciertas variables, eliminar columnas innecesarias, o reorganizar el orden de las columnas.
+
+**¿Para qué se usa?**  
+- Limpiar y reducir la cantidad de información para enfocarnos solo en lo necesario.
+- Organizar columnas para facilitar la lectura o el análisis posterior.
+
+---
+
+### ✅ Formas comunes de usar `select()`:
+
+
+```{r}
+
+
+
+# Selección por nombre explícito
+iris %>% select(Species, Sepal.Length, Sepal.Width) |> head()
+
+# Selección por rango de columnas
+iris %>% select(Sepal.Length:Petal.Length) |> head()
+
+# Eliminar columnas con el operador negativo
+iris %>% select(-Species) |> head()
+iris %>% select(-Sepal.Width, -Petal.Length) |> head()
+iris %>% select(-(Sepal.Width:Petal.Length)) |> head()
+
+```
+
+```{r}
+
+library(dplyr)
+datos <- iris
+# columnas que empiezan con "Sepal"
+datos %>% select(starts_with("Sepal")) |> head()
+
+# columnas que terminan con "Width"
+datos %>% select(ends_with("Width")) |> head()
+
+# columnas que contienen la letra "e"
+datos %>% select(contains("e")) |> head()
+
+# ⚠️ num_range() requiere columnas como r1, r2, r3, etc.
+# Este ejemplo no aplica a iris, pero se muestra como referencia:
+# select(num_range("r", 2:5))
+
+# última columna del dataframe
+datos %>% select(last_col()) |> head()
+
+
+# Ver valores únicos de la columna Species
+datos %>% select(Species) %>% unique() |> head()
+
+# Ordenar los valores únicos (aunque en iris ya están ordenados)
+datos %>% select(Species) %>% unique() %>% arrange(Species) |> head()
+
+# Mostrar las 10 observaciones con los valores más altos de Sepal.Length
+datos %>% top_n(10, wt = Sepal.Length) |> head()
+
+
+```
+
+
+
+
+### 📦 dplyr — Verbo `filter()`: filtrar filas
+
+
+ filter(condición): Selecciona solo las filas que cumplen cierta condición lógica.
+ 
+ Se puede combinar con operadores lógicos como:
+ 
++   &    → y lógico
++   |    → o lógico
++   ==   → igual
++   !=   → diferente
++   <    → menor que
++   <=   → menor o igual
++   >    → mayor que
++   >=   → mayor o igual
++   %in% → pertenece a un conjunto de valores
+
+ Importante: filter() devuelve un nuevo dataframe con solo las filas que cumplen las condiciones.
+
+
+```{r}
+
+library(dplyr)
+datos <- iris
+# Filtrar todas las flores cuya especie sea "setosa"
+datos %>% filter(Species == "setosa") |> head()
+
+# Filtrar flores con largo de pétalo mayor a 5
+datos %>% filter(Petal.Length > 5) |> head()
+
+# Condición combinada: Species = virginica Y ancho del sépalo > 3
+datos %>% filter(Species == "virginica" & Sepal.Width > 3) |> head()
+
+# Usando %in% para múltiples valores
+datos %>% filter(Species %in% c("versicolor", "virginica")) |> head()
+
+
+```
+
+```{r}
+
+library(ggplot2)
+
+datos %>%
+  filter(Species %in% c("versicolor", "virginica")) %>%
+  ggplot(aes(x = Petal.Length, y = Petal.Width, color = Species)) +
+  geom_point() +
+  labs(title = "Comparación entre versicolor y virginica") +
+  theme_minimal()
+
+
+```
+
+## 📦 dplyr — Verbo `group_by()`: agrupar datos
+
+ group_by(columna): Agrupa el dataframe según una o varias columnas.
+ 
+  Esto permite aplicar operaciones resumen como media, suma, conteo, etc. por grupo.
+  
+  Casi siempre se usa junto con summarise().
+
+
+```{r}
+# Promedio de largo de pétalo por especie
+datos %>%
+  group_by(Species) %>%
+  summarise(promedio_petal_length = mean(Petal.Length))
+
+# Promedio y desviación estándar del ancho del sépalo por especie
+datos %>%
+  group_by(Species) %>%
+  summarise(
+    promedio_sepal_width = mean(Sepal.Width),
+    desviacion_sepal_width = sd(Sepal.Width)
+  )
+
+```
+
++ summarise() reduce cada grupo a una fila.
+
++ n() dentro de summarise() cuenta cuántas filas hay por grupo.
+
++ Se puede agrupar por más de una variable si se desea, por ejemplo:
+
++ group_by(Species, otra_variable)
+
+
+
+
+## 📦 dplyr — Verbo `summarise()`: resumir datos
+
++ summarise(): Crea una nueva tabla con valores agregados (resumen) para cada grupo.
+
++ Debe usarse después de group_by() para calcular estadísticas por grupo.
+
++ Devuelve una fila por grupo con las métricas especificadas (promedio, suma, conteo, etc.)
+
+
+```{r}
+# Promedio del largo de pétalo por especie
+datos %>%
+  group_by(Species) %>%
+  summarise(promedio_petal_length = mean(Petal.Length))
+```
+
+
+```{r}
+# Cálculo de promedio y mediana por especie
+datos %>%
+  group_by(Species) %>%
+  summarise(
+    media_largo_sepalo = mean(Sepal.Length),
+    mediana_largo_sepalo = median(Sepal.Length)
+  )
+```
+
+```{r}
+# Contar cuántas observaciones hay por especie
+datos %>%
+  group_by(Species) %>%
+  summarise(total = n())
+```
+#### Notas
+
++ summarise() colapsa el dataframe a una fila por grupo.
+
++ Puedes usar cualquier función resumen: mean(), sd(), sum(), min(), max(), n(), etc.
+
++ Si no usas group_by(), summarise() calcula una sola fila para todo el dataframe.
+
+
+## 📦 dplyr — Verbo `mutate()`: crear nuevas columnas
+
+
++ mutate(): Crea nuevas columnas o modifica columnas existentes en un dataframe.
+
+ Las nuevas columnas pueden ser creadas a partir de operaciones con otras columnas existentes.
+ 
+ El dataframe conserva todas las columnas originales, con las nuevas agregadas al final (a menos que se indique lo contrario).
+
+
+```{r}
+# Crear una columna llamada "doble_petal_length"
+datos %>%
+  mutate(doble_petal_length = Petal.Length * 2) |> head(n=10)
+
+```
+
+```{r}
+# Crear columnas con área del pétalo y largo total (sépalo + pétalo)
+datos %>%
+  mutate(
+    area_petal = Petal.Length * Petal.Width,
+    total_length = Petal.Length + Sepal.Length
+  ) |> head(n=10)
+
+```
+
++ mutate() es muy útil para preparar variables antes de modelar o graficar.
+
++ Se puede usar en combinación con funciones condicionales, matemáticas, lógicas, etc.
+
++ También puedes usar funciones como if_else(), case_when(), round(), as.character(), etc. dentro de mutate().
+
+
+## 📦 dplyr — Verbos de unión: `left_join()`, `inner_join()`, `right_join()`, `full_join()`
+
+### 📝 Resumen
+
+- Los *joins* permiten **unir dos tablas** por una o varias columnas comunes, como en SQL.
+- Muy útil cuando necesitas **agregar columnas complementarias** desde otra tabla.
+
+### 🔑 ¿Cómo funcionan?
+
+- left_join(x, y, by = ...): Une las filas de `x` con las coincidencias de `y`. Si no hay coincidencia, rellena con `NA`.
+- inner_join(x, y, by = ...): Devuelve solo las filas que tienen coincidencias en ambas tablas.
+- right_join(x, y, by = ...): Igual que `left_join()`, pero priorizando las filas de `y`.
+- full_join(x, y, by = ...): Devuelve todas las filas de ambas tablas, rellenando con `NA` cuando no haya coincidencia.
+
+### 💡 Extra
+
+- Si los nombres de las columnas clave **son diferentes**, se usa:
+
+
+  left_join(tablaB, by = c("colA" = "colB")
+
+
+
+## 📦 patchwork — Combinar múltiples gráficas ggplot2
+
+### 📝 Resumen
+
+- `{patchwork}` facilita la **composición de varias gráficas `ggplot2`** en una sola ventana.
+- Se usa con los **operadores matemáticos**:
+  - `+`: para poner gráficas lado a lado (horizontales).
+  - `/`: para apilarlas verticalmente.
+  - `|`: también sirve para ponerlas lado a lado.
+  - Combinaciones como `(g1 | g2) / g3` permiten diseños personalizados.
+
+### 💡 Ventajas
+
+- Evita tener que usar `gridExtra` o `cowplot`.
+- Sintaxis simple e intuitiva.
+- Se puede usar con cualquier objeto creado con `ggplot()`.
+
+---
+
+### 🔎 Ejemplo en R (con `palmerpenguins`)
+
+```{r message=FALSE, warning=FALSE}
+library(ggplot2)
+library(patchwork)
+library(dplyr)
+library(palmerpenguins)
+
+datos <- penguins %>% filter(!is.na(body_mass_g), !is.na(flipper_length_mm))
+
+graf1 <- datos %>% 
+  ggplot(aes(x = body_mass_g, y = flipper_length_mm)) +
+  geom_point(color = "red", shape = 18, size = 2) +
+  labs(x = "Masa corporal (g)", y = "Longitud del ala (mm)") +
+  theme_light()
+
+graf2 <- datos %>% 
+  ggplot(aes(x = body_mass_g, y = flipper_length_mm)) +
+  geom_point(color = "purple", shape = 18, size = 2) +
+  theme_gray()
+
+# Lado a lado
+graf1 + graf2
+```
+
+```{r}
+# Una arriba de la otra
+graf1 / graf2
+```
+
+```{r}
+# Tercer gráfica y composición combinada
+graf3 <- datos %>%
+  ggplot(aes(x = body_mass_g, y = flipper_length_mm)) +
+  geom_line(color = "orange") +
+  labs(x = "Masa corporal (g)", y = "Longitud del ala (mm)") +
+  theme_minimal()
+
+# Composición personalizada
+(graf1 | graf2) / graf3
+
+```
+
+
+## 📦 dplyr — Funciones condicionales: `case_when()` y `case_match()`
+
+### 📝 Resumen
+
+- `case_when()` y `case_match()` son funciones de `{dplyr}` usadas para **asignar valores categóricos** o transformar variables con condiciones múltiples.
+- Simulan el comportamiento de `if / else if / else`, o incluso `switch`, pero con sintaxis más legible.
+- Son muy útiles para convertir variables numéricas en etiquetas ("1" → "oro") o crear clasificaciones personalizadas.
+
+---
+
+### 🔹 case_when()
+
+- Sintaxis basada en condiciones lógicas:  
+  `condición ~ valor`
+- Evalúa de arriba hacia abajo, **la primera condición que se cumple se aplica**.
+- Si no se cumple ninguna condición, devuelve `NA`, a menos que se use `.default`.
+
+```{r}
+
+medallas <- c(1,1,1,3,3,3,3,1,2,NA,NA,2,2,1,4)
+# 1 = oro
+# 2 = plata
+# 3 = bronce
+
+
+dplyr::case_when(
+  medallas == 1 ~ "oro",
+  medallas == 2 ~ "plata",
+  medallas == 3 ~ "bronce"
+)
+
+
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
