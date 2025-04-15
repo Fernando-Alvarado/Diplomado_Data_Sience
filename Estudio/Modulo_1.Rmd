@@ -648,10 +648,54 @@ dplyr::case_when(
 
 ```
 
+```{r}
+dplyr::case_when(
+  medallas == 1 ~ "oro",
+  medallas == 2 ~ "plata",
+  medallas == 3 ~ "bronce",
+  medallas > 3 ~ "error de registro"
+)
+```
+
+
+## 🧠 Lazy Evaluation en R — Evaluación perezosa de argumentos
+
+### 📝 Resumen
+
+- **Lazy evaluation** (evaluación perezosa) significa que R **no evalúa los argumentos de una función hasta que realmente se necesitan**.
+- Esto permite definir funciones con **argumentos opcionales** (con valores por defecto) sin que se genere un error, siempre que no se utilicen dentro del cuerpo de la función.
+- Si un argumento **es requerido** y no tiene valor por defecto, **R lanzará un error** si no se proporciona.
+
+### 💡 Comportamiento típico
+
+- Puedes definir funciones con argumentos opcionales:  
+  `f <- function(a, b = "valor") { ... }`
+- Si `b` nunca se usa, no se necesita proporcionarlo.
+- **Evita confusiones** usando nombres de argumentos (`nombre = valor`) en lugar de confiar en el orden posicional.
+
+---
+
+### 🔎 Ejemplos en R
+
+
+```{r}
+# Función con un argumento obligatorio y uno con valor por defecto
+mi_funcion_lazy <- function(nombre, pais = "México") {
+  paste("Mi nombre es", nombre, "y soy de", pais)
+}
+
+# Solo se proporciona el argumento obligatorio
+mi_funcion_lazy("Eduardo")
+
+
+# Se proporcionan ambos argumentos
+mi_funcion_lazy(nombre = "Eduardo", pais = "España")
+mi_funcion_lazy(pais = "España", nombre = "Eduardo")
 
 
 
-
+```
+**Ver clase 8 para aprender mas de funciones**
 
 
 

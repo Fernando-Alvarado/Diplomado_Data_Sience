@@ -1,0 +1,147 @@
+---
+title: "Modulo_2"
+author: "Fernando Alvarado"
+date: "2025-04-15"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## 📂 Lectura de datos Excel `.xlsx` con `readxl` y exploración rápida con `skimr`
+
+- Para leer archivos Excel (.xls y .xlsx) usamos el paquete `readxl`.
+
+- La función principal es: `read_xlsx("ruta", sheet = "nombre_hoja")`.
+
+- El archivo debe estar ubicado en la misma carpeta del script o se debe indicar su ruta.
+
+- Para explorar rápidamente un dataframe, `skimr::skim()` genera estadísticas resumen por variable.
+
+- Esta salida se puede guardar y analizar como un dataframe de metadatos.
+
+
+
+
+```{r message=FALSE, warning=FALSE}
+
+
+library(readxl)   # Leer archivos de Excel
+library(dplyr)    # Manipulación de datos
+library(ggplot2)  # Visualización
+library(lubridate) # Manejo de fechas
+library(skimr)    # Exploración estructurada de dataframes
+
+# ------------------------------------------------------
+# 📥 Lectura del archivo Excel con la hoja "Ventas"
+setwd("C:/Users/ferna/Documents/Diplomado_Data_Sience/Estudio/Data")
+
+datos_ventas <- read_xlsx("./datos_simulados.xlsx")
+datos_ventas
+
+# 📋 Revisión de la estructura general del dataframe
+str(datos_ventas)
+
+# 📊 Exploración detallada con skim()
+skim(datos_ventas)
+
+# 🧾 Guardar el resultado de skim() en un objeto para inspección
+mi_metadata <- skim(datos_ventas)
+str(mi_metadata)
+
+# 🔍 Acceder a los tipos de variable que detectó skimr
+mi_metadata$skim_type
+
+```
+
+
+
+## 📅 Manejo de fechas con `lubridate` y creación de variables temporales
+
+```{r message=FALSE, warning=FALSE}
+### 📝 Resumen
+
+# - Muchas veces las fechas están mal codificadas como texto (string). Debemos convertirlas con as.Date().
+# - El paquete {lubridate} permite extraer partes útiles como el día, mes, año o día de la semana.
+# - Una vez que las fechas están en formato Date, podemos crear nuevas columnas que representen:
+#     - El tiempo entre eventos (entrega, procesamiento, salida).
+#     - El mes, día o día de la semana de cada fecha.
+#
+# - Operaciones entre fechas (restas) devuelven diferencias en días por defecto.
+# - Asegúrate que todas las fechas estén en el **mismo formato** antes de operar.
+
+# ------------------------------------------------------
+# 📦 Librerías necesarias
+library(dplyr)
+library(readxl)
+library(lubridate)
+
+# 📥 Leer archivo Excel (usamos tu archivo de referencia)
+datos_ventas <- read_xlsx("./datos_simulados.xlsx", sheet = "Ventas")
+
+# ------------------------------------------------------
+# 🔧 Paso 1: Convertimos `Fecha Venta` a formato Date y extraemos partes
+datos_ventas <- datos_ventas %>%
+  mutate(`Fecha Venta` = as.Date(`Fecha Venta`, format = "%d/%m/%Y")) %>%
+  mutate(
+    MesVenta = month(`Fecha Venta`),     # mes numérico
+    DiaVenta = day(`Fecha Venta`),       # día del mes
+    DiaSemana = wday(`Fecha Venta`)      # día de la semana (1 = domingo)
+  )
+
+head(datos_ventas)
+
+# ------------------------------------------------------
+# 🔧 Paso 2: Homogeneizamos formato de otras columnas de fecha
+datos_ventas <- datos_ventas %>%
+  mutate(
+    FecEntrg = as.Date(FechaEntrega, format = "%d/%m/%Y"),
+    FecSalida = as.Date(FechaCamino, format = "%d/%m/%Y")
+  )
+
+# ------------------------------------------------------
+# 🔧 Paso 3: Creamos variables de tiempo
+datos_ventas <- datos_ventas %>%
+  mutate(
+    TiempoEntrega = FecEntrg - `Fecha Venta`,
+    TiempoCalle   = FecEntrg - FecSalida,
+    TiempoProces  = FecSalida - `Fecha Venta`
+  )
+
+head(datos_ventas)
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
