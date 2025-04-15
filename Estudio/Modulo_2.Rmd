@@ -6,7 +6,9 @@ output: html_document
 ---
 
 ```{r setup, include=FALSE}
+
 knitr::opts_chunk$set(echo = TRUE)
+
 ```
 
 ## 📂 Lectura de datos Excel `.xlsx` con `readxl` y exploración rápida con `skimr`
@@ -35,10 +37,10 @@ library(skimr)    # Exploración estructurada de dataframes
 
 # ------------------------------------------------------
 # 📥 Lectura del archivo Excel con la hoja "Ventas"
-setwd("C:/Users/ferna/Documents/Diplomado_Data_Sience/Estudio/Data")
 
+setwd("C:/Users/ferna/Documents/Diplomado_Data_Sience/Estudio/Data")
 datos_ventas <- read_xlsx("./datos_simulados.xlsx")
-datos_ventas
+datos_ventas |> head()
 
 # 📋 Revisión de la estructura general del dataframe
 str(datos_ventas)
@@ -46,9 +48,7 @@ str(datos_ventas)
 # 📊 Exploración detallada con skim()
 skim(datos_ventas)
 
-# 🧾 Guardar el resultado de skim() en un objeto para inspección
-mi_metadata <- skim(datos_ventas)
-str(mi_metadata)
+
 
 # 🔍 Acceder a los tipos de variable que detectó skimr
 mi_metadata$skim_type
@@ -59,82 +59,1150 @@ mi_metadata$skim_type
 
 ## 📅 Manejo de fechas con `lubridate` y creación de variables temporales
 
+
+### 📝 Resumen
+
+- Muchas veces las fechas vienen mal codificadas como texto (`string`).  
+  Debemos convertirlas a formato fecha usando `as.Date()`.
+
+- El paquete `{lubridate}` permite extraer partes útiles de las fechas:
+  - Día (`day()`), mes (`month()`), año (`year()`), día de la semana (`wday()`), etc.
+
+- Una vez que las fechas están en formato `Date`, podemos:
+  - Calcular el tiempo entre eventos (por ejemplo: entrega, salida, procesamiento).
+  - Crear columnas nuevas con características como el mes o el día de la semana.
+
+- Las operaciones entre fechas, como restas, devuelven diferencias en **días** por defecto.
+
+⚠️ **Importante:** Asegúrate de que **todas las fechas estén en el mismo formato** antes de realizar operaciones con ellas.
+
+---
+
+## 📅 Limpieza de columna `Fecha Venta` y creación de variables de tiempo
+
+
+```{r message=FALSE, warning=FALSE}
+
+# 📦 Carga de librerías
+library(readxl)
+library(dplyr)
+library(lubridate)
+
+# 📥 Lectura del archivo desde hoja "Ventas"
+setwd("C:/Users/ferna/Documents/Diplomado_Data_Sience/Estudio/Data")
+datos_ventas <- read_xlsx("./datos_simulados.xlsx")
+
+# 🔧 Limpieza de columna Fecha_venta
+datos_ventas <- datos_ventas %>%
+  mutate(Fecha_venta = as.Date(Fecha_venta)) %>%  # convierte de datetime a date
+  mutate(
+    MesVenta   = month(Fecha_venta),
+    DiaVenta   = day(Fecha_venta),
+    DiaSemana  = wday(Fecha_venta, label = TRUE, abbr = FALSE)  # Lunes, Martes, etc.
+  )
+
+# 👁️ Visualización rápida
+head(datos_ventas)
+```
+
+
+
+## 📊 Lectura de archivos `.xls` y análisis rápido con `inspectdf`
+
+
+
+- Los archivos `.xls` (formato de Excel antiguo) también se pueden leer con la función `readxl::read_xls()`.
+
+- La librería `{inspectdf}` permite explorar rápidamente un `data.frame` mediante visualizaciones automáticas y resúmenes estadísticos útiles.
+
+#### 🔍 Funciones clave del paquete `{inspectdf}`:
+
+- `inspect_na()`: analiza la cantidad y proporción de valores faltantes (`NA`) por columna.
+- `inspect_cat()`: inspecciona columnas categóricas y muestra la distribución de sus valores.
+- `inspect_cor()`: muestra la correlación entre variables numéricas.
+- `inspect_types()`: indica cuántas variables hay de cada tipo de dato (numérico, lógico, carácter, etc.).
+- `inspect_num()`: genera estadísticas básicas para variables numéricas (media, mediana, desviación estándar, etc.).
+- `show_plot()`: genera automáticamente una gráfica para cualquier resultado obtenido con las funciones `inspect_*`.
+
+💡 *Tip*: Todas las funciones `inspect_*()` devuelven tibbles, por lo que también puedes manipular sus resultados con `dplyr`.
+
+---
+
+
+```{r message=FALSE, warning=FALSE}
+
+# ------------------------------------------------------
+# 📦 Carga de librerías
+library(readxl)
+library(dplyr)
+library(inspectdf)
+
+# 📥 Lectura del archivo .xls (Superstore clásico)
+setwd("C:/Users/ferna/Documents/Diplomado_Data_Sience/Estudio/Data")
+data_superstore <- read_xlsx("./datos_simulados.xlsx") # <- Cámbialo si tienes otro archivo .xls real
+head(data_superstore)
+
+# ------------------------------------------------------
+# 🧪 Exploración del dataframe con inspectdf
+
+# Análisis de valores faltantes
+inspect_na(data_superstore)
+inspect_na(data_superstore) |> show_plot()
+
+# Análisis de variables categóricas
+inspect_cat(data_superstore)
+inspect_cat(data_superstore) |> show_plot()
+
+# Correlación entre variables numéricas
+inspect_cor(data_superstore) |> show_plot()
+
+# Tipos de variables (numéricas, categóricas, etc.)
+inspect_types(data_superstore)
+inspect_types(data_superstore) |> show_plot()
+
+# Resumen de variables numéricas
+inspect_num(data_superstore)
+inspect_num(data_superstore) |> show_plot()
+```
+
+
+
+## 🗺️ Visualización geográfica con `maps` + `ggplot2` + `dplyr`
+
+
+### 📝 Resumen
+
+- La librería `{maps}` permite acceder a mapas geográficos predefinidos: estados de EE.UU., países, condados, etc.
+- Combinada con `{ggplot2}`, es posible crear mapas temáticos que representen una variable cuantitativa (por ejemplo, ganancias por estado).
+- En este ejemplo se usa la suma de `Profit` por estado a partir del dataset `data_superstore`.
+
+---
+
+#### 🔍 Flujo general para graficar un mapa temático:
+
+1. **Agrupar datos por estado** y calcular la ganancia total (`Profit`) con `group_by()` y `summarise()`.
+2. **Homogeneizar nombres de estados**, convirtiéndolos a minúsculas para que coincidan con los del objeto `map_data("state")`.
+3. **Unir los datos** de ganancias con el mapa base utilizando `left_join()`, emparejando por nombre del estado.
+4. **Calcular las coordenadas centrales** de cada estado para agregar etiquetas (`geom_label_repel()`).
+5. **Graficar** el mapa con `geom_polygon()` para las áreas y `geom_label_repel()` para mostrar nombres o datos sobre los estados.
+
+💡 *Tip:* Asegúrate que las variables estén bien alineadas (nombres y formatos) antes de hacer el `join`, o la gráfica podría quedar vacía o desfasada.
+
+
+# Bases de datos más estructuradas
+
+```{r}
+library(DBI)
+library(dbplyr)
+library(RSQLite)
+library(Lahman)
+```
+
++ SQLite es un sistema de administración de bases de datos relacionales (RDBMS, Relational Database Management System)
+
++ Es ligero, serverless (sin servidor), self-contained (autónomo) e integrado (embedded)
+
+Se utiliza para el almacenamiento local de datos en aplicaciones, prototipos y proyectos pequeños o medianos
+
+## Ligero (y rápido):
+
++ SQLite está diseñado para ser ligero y eficiente, lo que lo hace ideal para aplicaciones con tráfico bajo o moderado, o para su uso en sistemas integrados.
+
++ Funciona bien para aplicaciones pequeñas, pero puede no ser adecuado para sistemas de alta concurrencia o a gran escala.
+
+## Serverless:
+
++ A diferencia de bases de datos tradicionales como MySQL o PostgreSQL, SQLite no requiere un proceso de servidor separado para funcionar.
+
++ La base de datos se almacena en un solo archivo en el disco, y la biblioteca lee y escribe directamente en ese archivo.
+
+## Self-Contained:
+
++ Es un sistema autónomo, lo que significa que no tiene dependencias externas. Todo el motor de la base de datos está contenido dentro de una sola biblioteca.
+
+## Configuración cero
+
++ No requiere configuración ni administración. No es necesario instalar un servidor, configurar usuarios o administrarar permisos.
+
+## Base de datos en un solo archivo:
+
++ Toda la base de datos (tablas, índices y datos) se almacena en un solo archivo en el disco (por ejemplo, mibasededatos.db). Por lo tanto es muy fácil copiar, mover o compartir la base de datos.
+
+## Adicionales:
+
++ SQLite es multiplataforma y funciona en varios sistemas operativos, incluyendo Windows, macOS, Linux, iOS y Android.
+
++ Admite propiedades ACID (Atomicidad, Consistencia, Aislamiento, Durabilidad), lo que garantiza transacciones confiables incluso en caso de fallos del sistema.
+
++ Es open-source y se publica bajo dominio público, lo que significa que es gratis para cualquier uso sin restricciones de licencia.
+
+# Empecenmos...
+
++ Una de las formas más fáciles es con DBI utilizando la función `dbGetQuery()` 
+
++ Se hace copy/paste de código SQL en la función de R como un string entre comillas
+
++ Esta forma se conoce como pass through SQL code
+
+
+
+## 🗃️ Bases de datos SQLite en R con `DBI` y `RSQLite`
+
 ```{r message=FALSE, warning=FALSE}
 ### 📝 Resumen
 
-# - Muchas veces las fechas están mal codificadas como texto (string). Debemos convertirlas con as.Date().
-# - El paquete {lubridate} permite extraer partes útiles como el día, mes, año o día de la semana.
-# - Una vez que las fechas están en formato Date, podemos crear nuevas columnas que representen:
-#     - El tiempo entre eventos (entrega, procesamiento, salida).
-#     - El mes, día o día de la semana de cada fecha.
-#
-# - Operaciones entre fechas (restas) devuelven diferencias en días por defecto.
-# - Asegúrate que todas las fechas estén en el **mismo formato** antes de operar.
+# - `DBI::dbConnect()` crea una conexión a una base de datos SQLite.
+# - `dbListTables()` muestra las tablas disponibles.
+# - `dbWriteTable()` permite escribir un dataframe en la base de datos (crear o sobrescribir tablas).
+# - `dbGetQuery()` ejecuta consultas SQL directamente sobre la base de datos y devuelve un dataframe.
+# - Se puede usar SQL clásico para hacer SELECT, WHERE, LIKE, GROUP BY, etc.
+# - Usando `append = TRUE` en `dbWriteTable()` se pueden insertar múltiples dataframes como si fueran filas nuevas.
+
+# ------------------------------------------------------
+# 📦 Cargar paquetes y conectar base de datos
+library(DBI)
+library(RSQLite)
+library(dplyr)
+
+# Crear conexión a la base de datos
+setwd("C:/Users/ferna/Documents/Diplomado_Data_Sience/Estudio/Data")
+conn <- dbConnect(SQLite(), "./CarsDB.db")
+
+# Listar tablas existentes
+dbListTables(conn)
+
+# ------------------------------------------------------
+# 🛠️ Preparar los datos: mtcars con columna de nombres de autos
+datos <- mtcars
+datos$car_names <- rownames(datos)
+rownames(datos) <- NULL
+head(datos)
+
+# Escribir tabla "cars_data"
+dbWriteTable(conn, "cars_data", datos, overwrite = TRUE)
+dbListTables(conn)
+
+# ------------------------------------------------------
+# 🔍 Consultas SQL a la tabla
+
+# Todos los registros
+dbGetQuery(conn, "SELECT * FROM cars_data") |> head()
+
+# Solo los primeros 10
+dbGetQuery(conn, "SELECT * FROM cars_data LIMIT 10") |> head()
+
+# Autos con 8 cilindros
+dbGetQuery(conn,"SELECT car_names, hp, cyl FROM cars_data WHERE cyl = 8")|> head()
+
+# Autos que empiezan con "M" y tienen 6 u 8 cilindros
+dbGetQuery(conn,"SELECT car_names, hp, cyl FROM cars_data 
+                 WHERE car_names LIKE 'M%' AND cyl IN (6,8)")  |> head()
+
+# Promedio de hp y mpg por cilindros
+dbGetQuery(conn,"SELECT cyl, AVG(hp) AS average_hp, AVG(mpg) AS average_mpg 
+                 FROM cars_data 
+                 GROUP BY cyl 
+                 ORDER BY average_hp") |> head()
+
+# Guardar resumen en un dataframe de R
+resumen <- dbGetQuery(conn,"SELECT cyl, AVG(hp) AS average_hp 
+                            FROM cars_data 
+                            GROUP BY cyl 
+                            ORDER BY average_hp") |> head()
+
+# Ver clase del objeto obtenido
+
+# ------------------------------------------------------
+# 🧩 Escribir múltiples dataframes desde lista
+
+# Crear dos dataframes con autos y fabricantes
+autos <- c('Camaro', 'California', 'Mustang', 'Explorer')
+fabricante <- c('Chevrolet','Ferrari','Ford','Ford')
+df1 <- data.frame(autos, fabricante)
+
+autos <- c('Corolla', 'Lancer', 'Sportage', 'XE')
+fabricante <- c('Toyota','Mitsubishi','Kia','Jaguar')
+df2 <- data.frame(autos, fabricante)
+
+# Lista de dataframes
+lista_dfs <- list(df1, df2)
+
+# Insertar todos en la tabla "otros_autos"
+for(k in 1:length(lista_dfs)){
+  dbWriteTable(conn, "otros_autos", lista_dfs[[k]], append = TRUE) 
+}
+
+# Verificar tablas y contenido
+dbListTables(conn) |> head()
+dbGetQuery(conn, "SELECT * FROM otros_autos") |> head()
+```
+
+
+### 📝 Resumen general: uso de SQLite y consultas SQL en R
+
+- **SQLite** es un sistema de bases de datos relacional que se caracteriza por ser:
+  - Ligero y rápido.
+  - Serverless (no necesita servidor).
+  - Self-contained (todo está en una sola biblioteca).
+  - De configuración cero.
+  - Basado en un solo archivo `.db`.
+  - Multiplataforma y de código abierto.
+  - Compatible con transacciones ACID (seguras y confiables).
+
+- Es ideal para prototipos, aplicaciones móviles y proyectos con almacenamiento local.
+
+---
+
+## 🔗 Conexión a SQLite en R
+
+Para conectar una base de datos SQLite desde R, usamos:
+
+
+
+```{r message=FALSE, warning=FALSE}
+
+library(DBI)
+library(RSQLite)
+
+setwd("C:/Users/ferna/Documents/Diplomado_Data_Sience/Estudio/Data")
+conn <- dbConnect(SQLite(), "./CarsDB.db")
+
+# Definimos nuestros parámetros
+millas <- 18
+cilindros <- 6
+
+# Consulta con parámetros definidos en R
+mi_df_query <- dbGetQuery(conn,
+  'SELECT car_names, mpg, cyl FROM cars_data WHERE mpg >= ? AND cyl >= ?',
+  params = c(millas, cilindros))
+
+mi_df_query
+
+# ------------------------------------------------------
+# 🧹 Cerrar conexión
+dbDisconnect(conn)
+
+# ------------------------------------------------------
+# 📦 Trabajar con bases de datos usando dbplyr
+library(dbplyr)
+
+# Base de datos SQLite con datos de béisbol (Lahman)
+lahman_s <- lahman_sqlite()
+bateo <- tbl(lahman_s, "Batting")
+
+# Ver clase del objeto (es un objeto remoto)
+class(bateo)
+
+# Ver consulta SQL generada
+bateo %>% show_query()
+
+# Filtrar por un jugador específico
+bateo %>% filter(playerID == "mcguide01")
+
+# Mostrar la query resultante de esa operación
+bateo %>%
+  filter(playerID == "mcguide01") %>%
+  show_query()
+
+# Encadenar más operaciones (filtrar + seleccionar)
+bateo %>%
+  filter(playerID == "mcguide01") %>%
+  select(yearID, R) %>%
+  show_query()
+
+# Agregar columna condicional con mutate()
+bateo %>%
+  filter(playerID == "mcguide01") %>%
+  mutate(era = if_else(yearID <= 1888, "vieja era", "nueva era")) %>%
+  select(playerID, yearID, era, teamID) %>%
+  show_query()
+
+```
+
+
+
+## 📆 De Excel y sus infiernos con las fechas: `excel_numeric_to_date()` y `convert_to_date()`
+
+
+### 📝 Resumen
+
+- Excel guarda las fechas como **números secuenciales**. Por ejemplo, el valor `41103` representa la fecha `"2012-07-03"`.
+- Esto puede generar confusión al importar datos: ves números como `42000` en lugar de fechas legibles.
+- La función `excel_numeric_to_date()` convierte esos números en objetos de clase `Date` en R.
+- Si activas `include_time = TRUE`, también recuperas la hora exacta (en formato `POSIXlt`), útil si hay decimales.
+- Puedes especificar el **sistema de fechas** (por ejemplo, el usado por Excel en Mac antes de 2011), lo que garantiza una conversión correcta.
+
+---
+
+### 📦 Bonus
+
+- Las funciones `convert_to_date()` y `convert_to_datetime()` son más **robustas** que `excel_numeric_to_date()`.
+- Son capaces de manejar **mezclas de números y strings** de fechas en una misma columna.
+- Resultan ideales cuando los formatos son **inconsistentes** entre columnas o archivos Excel diferentes.
+
+
+
+```{r message=FALSE, warning=FALSE}
+
 
 # ------------------------------------------------------
 # 📦 Librerías necesarias
-library(dplyr)
 library(readxl)
 library(lubridate)
+library(vroom)         # convert_to_date() viene de este paquete
+library(forcats)       # para factores ordenados
 
-# 📥 Leer archivo Excel (usamos tu archivo de referencia)
-datos_ventas <- read_xlsx("./datos_simulados.xlsx", sheet = "Ventas")
 
 # ------------------------------------------------------
-# 🔧 Paso 1: Convertimos `Fecha Venta` a formato Date y extraemos partes
-datos_ventas <- datos_ventas %>%
-  mutate(`Fecha Venta` = as.Date(`Fecha Venta`, format = "%d/%m/%Y")) %>%
-  mutate(
-    MesVenta = month(`Fecha Venta`),     # mes numérico
-    DiaVenta = day(`Fecha Venta`),       # día del mes
-    DiaSemana = wday(`Fecha Venta`)      # día de la semana (1 = domingo)
-  )
+# 📅 Conversión desde código numérico de Excel
+#excel_numeric_to_date(41103)
+#excel_numeric_to_date(41103.01)  # Ignora decimales por defecto
+#excel_numeric_to_date(41103.01, include_time = TRUE)  # Convierte a POSIXlt (incluye hora)
+#excel_numeric_to_date(41103.01, date_system = "mac pre-2011")
 
+# ------------------------------------------------------
+# 🧠 Funciones más robustas con entradas mixtas
+#convert_to_date(c("2020-02-29", "40000.1"))
+#convert_to_date(c("2020-02-29", "40000.1", "26-04-2021"))
+#convert_to_date(c("2020-02-29", "40000.1", "04-26-2021"))
+#convert_to_date(c("2020-02-29", "40000.1", "2021/04/26"))
+
+
+
+```
+
+## **Clase 3, empezamos a ver limpieza de datos**
+
+
+
+## 🧼 Introducción a limpieza de datos con `janitor` y verificación de estructuras
+
+### 🧼 Resumen: Limpieza de datos al importar archivos
+
+- Al importar archivos `.csv`, `.xls`, `.xlsx` o conectarse a bases de datos, los datos pueden venir **mal formateados** o con estructuras inconsistentes.
+- La **limpieza de datos** es una de las etapas más **tardadas y críticas** del pipeline de ciencia de datos.
+
+---
+
+### 📦 Paquetes útiles para limpieza
+
+- `janitor::clean_names()`: Limpia nombres de columnas eliminando acentos, espacios, caracteres especiales, y los convierte a **snake_case** en minúsculas.
+- `compare_df_cols()` y `compare_df_cols_same()` (de `{janitor}`): Comparan estructuras entre dataframes, muy útiles antes de usar `bind_rows()` o `rbind()`.
+- `janitor::tabyl()`: Genera **tablas de frecuencia** claras y bien presentadas, ideal para columnas categóricas. Es una mejora sobre la función base `table()`.
+
+💡 *Tip:* Usar estos paquetes desde el inicio ahorra tiempo y evita errores en análisis posteriores.
+
+
+
+```{r message=FALSE, warning=FALSE}
+
+# ------------------------------------------------------
+# 📦 Cargar librerías
+library(readxl)
+library(readr)
+library(dplyr)
+library(ggplot2)
+library(lubridate)
+library(janitor)
+
+# ------------------------------------------------------
+# 📥 Cargar archivo Excel
+setwd("C:/Users/ferna/Documents/Diplomado_Data_Sience/Estudio/Data")
+datos_ventas <- read_xlsx("./VentasNum2024.xlsx")
 head(datos_ventas)
+names(datos_ventas)
+
+# ✨ Limpiar nombres de columnas
+datos_ventas <- datos_ventas |> clean_names()
+names(datos_ventas)
 
 # ------------------------------------------------------
-# 🔧 Paso 2: Homogeneizamos formato de otras columnas de fecha
-datos_ventas <- datos_ventas %>%
-  mutate(
-    FecEntrg = as.Date(FechaEntrega, format = "%d/%m/%Y"),
-    FecSalida = as.Date(FechaCamino, format = "%d/%m/%Y")
-  )
+# 🧪 Verificación de estructura entre dataframes
+
+# Simulación de dataframes
+df1 <- data.frame(a = 1:2, b = c("grande", "pequeño"))
+df2 <- data.frame(a = 10:12, b = c("mediano", "pequeño", "grande"), c = 0,
+                  stringsAsFactors = TRUE)
+df3 <- df1 |> mutate(b = as.character(b))
+
+# Ver dataframes
+df1
+df2
+df3
+
+# Comparar estructuras
+compare_df_cols(df1, df2, df3)
+
+# Comparación con detalles de incompatibilidad
+compare_df_cols(df1, df2, df3, return = "mismatch")
+
+# Comparación para apilar por filas
+compare_df_cols(df1, df2, df3, return = "mismatch", bind_method = "rbind")
+
+# ¿Se pueden combinar sin problemas?
+compare_df_cols_same(df1, df3)
+compare_df_cols_same(df2, df3)
 
 # ------------------------------------------------------
-# 🔧 Paso 3: Creamos variables de tiempo
-datos_ventas <- datos_ventas %>%
-  mutate(
-    TiempoEntrega = FecEntrg - `Fecha Venta`,
-    TiempoCalle   = FecEntrg - FecSalida,
-    TiempoProces  = FecSalida - `Fecha Venta`
-  )
+# 📊 Tablas cruzadas y limpieza visual
 
-head(datos_ventas)
+# Tabla cruzada simple
+mtcars %>% tabyl(gear, cyl)
+
+# Tabla cruzada por 3 variables (am = transmisión automática)
+mtcars %>% tabyl(gear, cyl, am)
+
+# Adornar tablas con totales y porcentajes
+mtcars %>%
+  tabyl(gear, cyl) %>%
+  adorn_totals("col") %>%
+  adorn_percentages("row") %>%
+  adorn_pct_formatting(digits = 2) %>%
+  adorn_ns() %>%
+  adorn_title()
 ```
 
 
 
 
 
+## 🔍 Detección de duplicados y relaciones uno-a-uno con `{janitor}`
 
 
 
+- `get_dupes()`: Busca filas duplicadas dentro de un dataframe, ya sea considerando **todas las columnas** o solo un subconjunto.
+
+#### ¿Para qué sirve?
+- Verificar si una columna puede funcionar como **identificador único**.
+- Detectar registros **repetidos parcialmente** (por ejemplo, mismos nombres pero con datos diferentes).
+
+---
+
+- `get_one_to_one()`: Evalúa si existe una relación **uno a uno** entre dos columnas (o más).
+
+#### ¿Qué permite verificar?
+- Si puedes **predecir completamente una columna a partir de otra**.
+- Si hay **redundancia** en las variables.
+- Es útil para validar **llaves candidatas** o relaciones entre claves primarias y foráneas.
+
+💡 *Tip:* Estas funciones provienen del paquete `{janitor}` y son especialmente útiles en etapas tempranas del análisis de datos.
 
 
 
+```{r message=FALSE, warning=FALSE}
+
+# ------------------------------------------------------
+# 📦 Cargar librerías
+library(dplyr)
+library(janitor)
+library(readr)
+
+# ------------------------------------------------------
+# 🧪 Detección de duplicados
+
+# Todos los renglones de mtcars son únicos
+get_dupes(dat = mtcars)
+
+# ¿Hay duplicados en columnas específicas?
+get_dupes(dat = mtcars, wt, cyl)
+
+# Verificar si una columna (como id_venta) es un ID único
+setwd("C:/Users/ferna/Documents/Diplomado_Data_Sience/Estudio/Data")
+datos_ventas <- readxl::read_xlsx("./VentasNum2024.xlsx") |> clean_names()
+get_dupes(dat = datos_ventas, id_venta)
+
+# ------------------------------------------------------
+# 🔁 Verificar relaciones uno-a-uno
+
+# Usamos dataset starwars incluido en dplyr
+datos <- dplyr::starwars
+
+# Primeros 10 renglones: ¿hay columnas con relación 1 a 1?
+datos[1:10, ] %>% get_one_to_one()
+
+# Más restringido: solo los primeros 5
+datos[1:5, ] %>% get_one_to_one()
+
+# Inspeccionar visualmente algunas columnas
+datos[1:5, ] %>% dplyr::select(name, height, mass, skin_color)
+datos[1:5, ] %>% dplyr::select(birth_year, films)
+
+# ------------------------------------------------------
+# 📦 Dataset real: Superstore
+
+data_superstore <- read_csv("./Sample - Superstore.csv")
+
+# Buscar relaciones uno-a-uno entre columnas
+data_superstore |> get_one_to_one()
+
+# Ejemplo específico: ¿Customer ID predice Customer Name?
+data_superstore |> dplyr::select(`Customer ID`, `Customer Name`)
+```
 
 
 
+## ❌ Manejo de NAs (valores faltantes) con `{visdat}` y `{naniar}`
+
+
+- El manejo adecuado de valores faltantes (`NA`) es una etapa crítica en la limpieza de datos.
+- Eliminar filas o columnas con `NA` de forma directa puede llevar a la pérdida de información importante o sesgos en el análisis.
+
+---
+
+### 📦 Paquetes útiles
+
+#### `{visdat}`
+- Permite visualizar tipos de datos y presencia de valores faltantes:
+  - `vis_dat()`: muestra el tipo de cada variable y sus valores.
+  - `vis_miss()`: muestra un mapa de NAs por observación.
+
+#### `{naniar}`
+- Especializado en la exploración y análisis de datos faltantes:
+  - `gg_miss_var()`: grafica la proporción de `NA` por variable.
+  - `add_prop_miss()`: añade una columna con el porcentaje de `NA` por fila.
+  - `miss_var_summary()`: genera un resumen tabular con el total y proporción de `NA` por columna.
+  - `geom_miss_point()`: visualización de puntos perdidos en variables numéricas.
+  - `miss_var_run()`: analiza rachas (runs) de valores faltantes consecutivos.
+  - `miss_var_span()`: evalúa la presencia de `NA` en bloques de observaciones.
+  - `miss_var_table()`: muestra cuántas columnas tienen una cierta cantidad de valores faltantes.
+
+💡 *Tip:* Antes de imputar o eliminar datos, analiza con visualizaciones y resúmenes dónde y cómo se presentan los `NA`.
+
+
+```{r message=FALSE, warning=FALSE}
+
+# ------------------------------------------------------
+# 📦 Cargar librerías
+library(dplyr)
+library(visdat)
+library(naniar)
+library(ggplot2)
+
+# ------------------------------------------------------
+# 🧪 Ejemplo básico
+mi_dataframe <- data.frame(v1 = c(1, NA, 3),
+                           v2 = c(NA, NA, NA),
+                           v3 = c("a", NA, "b"))
+mi_dataframe
+
+# ❌ Remover filas y columnas vacías (demasiado drástico)
+remove_empty(mi_dataframe, c("rows", "cols"))
+
+# ------------------------------------------------------
+# 📊 Dataset de ejemplo: airquality (base de R)
+datos <- airquality
+head(datos)
+
+# Visualización general de los tipos de datos y NAs
+datos %>% vis_dat()
+
+# Visualización centrada sólo en los NAs
+datos %>% vis_miss()
+
+# Gráfico de proporción de NAs por variable
+datos %>% gg_miss_var()
+
+# Facet por mes
+datos %>% gg_miss_var(facet = Month)
+
+# Agregar columna con proporción de NAs por fila
+datos %>% add_prop_miss() %>% head(15)
+
+# Resumen tabular por columna
+datos %>% miss_var_summary()
+
+# Tabla resumen de cuántas variables tienen cuántos NAs
+datos %>% miss_var_table()
+
+# Gráfico de dispersión con NAs visualizados
+datos %>%
+  ggplot(aes(x = Solar.R, y = Ozone)) +
+  geom_miss_point()
+
+# Con facet por mes
+datos %>%
+  ggplot(aes(x = Solar.R, y = Ozone)) +
+  geom_miss_point() +
+  facet_wrap(~Month)
+
+# Análisis de rachas de NAs en la variable Ozone
+miss_var_run(datos, Ozone)
+
+# Análisis por bloques de 20 filas
+miss_var_span(datos, Ozone, span_every = 20)
+
+# NAs en Ozone agrupados por mes
+datos %>%
+  group_by(Month) %>%
+  miss_var_summary() %>%
+  filter(variable == "Ozone")
+```
+
+
+## 🧩 Imputación y análisis avanzado de valores faltantes con `naniar`, `simputation` y `mice`
+
+### 📝 Resumen: Rastrear y rellenar valores faltantes
+
+- Las funciones `bind_shadow()` y `as_shadow()` (del paquete `{naniar}`) permiten **rastrear valores faltantes** creando columnas auxiliares con sufijos `_NA`.
+
+#### ¿Para qué sirven estas columnas extras?
+- Analizar **cuándo y dónde** faltan datos.
+- Estudiar **relaciones entre los NAs y otras variables** del dataset.
+
+---
+
+### 📦 Imputación de datos faltantes
+
+El paquete `{simputation}` ofrece funciones prácticas para **rellenar (imputar)** valores perdidos:
+
+- `impute_lm()`: usa regresión lineal para imputar valores.
+- `impute_median()`: imputación basada en la **mediana**, útil para variables con outliers o agrupaciones.
+- `impute_cart()`: utiliza árboles de decisión (**CART**) para imputar valores según relaciones no lineales.
+
+---
+
+### 🧠 Imputación múltiple avanzada
+
+- El paquete `{mice}` permite realizar **imputación múltiple**, técnica más robusta para análisis serios.
+- Aunque en este contexto solo usamos su función para **visualizar patrones de datos faltantes**, es útil saber que `{mice}` también puede generar múltiples datasets imputados de forma coherente.
+
+💡 *Tip:* Rastrear los `NA` antes de imputar ayuda a detectar sesgos estructurales y evitar errores graves.
+
+
+```{r message=FALSE, warning=FALSE}
+
+# ------------------------------------------------------
+# 📦 Cargar librerías
+library(dplyr)
+library(janitor)
+library(naniar)
+library(simputation)
+library(ggplot2)
+library(mice)
+
+# ------------------------------------------------------
+# 📊 Dataset: airquality (con NAs en Ozone y Solar.R)
+datos <- airquality
+
+# Crear tabla sombra: marca dónde hay NAs
+datos |> as_shadow() |> head(15)
+datos |> bind_shadow() |> head(15)
+datos |> bind_shadow() |> glimpse() |> head(15)
+
+# Estadísticas por presencia/ausencia de NAs en Ozone
+datos %>% bind_shadow() %>%
+  group_by(Ozone_NA) %>%
+  summarise_at(.vars = "Solar.R",
+               .funs = c("mean", "sd", "var", "min", "max"),
+               na.rm = TRUE) |> head()
+
+# Visualización de densidad separada por Ozone_NA
+datos %>% bind_shadow() %>%
+  ggplot(aes(x = Temp, colour = Ozone_NA)) + 
+  geom_density() 
+
+datos %>% bind_shadow() %>%
+  ggplot(aes(x = Solar.R, colour = Ozone_NA)) + 
+  geom_density()
+
+# ------------------------------------------------------
+# 📥 Imputación usando regresión lineal
+datos_imp_reglin <- impute_lm(datos, Ozone ~ Temp + Wind)
+head(datos_imp_reglin, 15)
+datos_imp_reglin |> miss_var_summary() |> head()
+
+# Visualización post-imputación
+datos %>%
+  bind_shadow() %>%
+  as.data.frame() %>%
+  impute_lm(Ozone ~ Temp + Wind) %>%
+  ggplot(aes(x = Temp, y = Ozone, colour = Ozone_NA)) +
+  geom_point() 
+datos %>%
+  bind_shadow() %>%
+  as.data.frame() %>%
+  impute_lm(Ozone ~ Temp + Wind) %>%
+  ggplot(aes(x = Wind, y = Ozone, colour = Ozone_NA)) +
+  geom_point()
+
+# ------------------------------------------------------
+# 🧠 Imputación avanzada considerando Solar.R también
+datos_imp_reglin2 <- impute_lm(datos, Ozone ~ Solar.R + Temp + Wind)
+head(datos_imp_reglin2)
+datos_imp_reglin2 |> miss_var_summary()
+
+# Rellenar los NA restantes con mediana por mes
+datos_imp_reglin_med <- impute_median(datos_imp_reglin2, Ozone ~ Month)
+head(datos_imp_reglin_med, 15)
+datos_imp_reglin_med |> miss_var_summary()
+
+# ------------------------------------------------------
+# 🌲 Imputación con árboles de decisión (CART)
+datos_imp_arbol <- impute_cart(datos, Ozone ~ .)
+head(datos_imp_arbol)
+datos_imp_arbol |> miss_var_summary()
+
+# Visualización: imputación usando árbol
+datos %>%
+  bind_shadow() %>%
+  as.data.frame() %>%
+  impute_cart(Ozone ~ .) %>%
+  ggplot(aes(x = Wind, y = Ozone, colour = Ozone_NA)) +
+  geom_point()
+
+# Visualizar impacto sobre otra variable faltante (Solar.R)
+datos %>%
+  bind_shadow() %>%
+  as.data.frame() %>%
+  impute_cart(Ozone ~ .) %>%
+  ggplot(aes(x = Temp, y = Ozone, colour = Solar.R_NA)) +
+  geom_point()
+
+# ------------------------------------------------------
+# 📊 Análisis de patrones de NAs
+datos |> md.pattern()
+```
 
 
 
+## 🧠 Detección de columnas sin información y predicción de valores faltantes
+
+### 📝 Resumen: Detección avanzada de problemas en datos
+
+- A veces los datasets no solo contienen `NA`, sino también columnas problemáticas como:
+  - **Constantes**: variables que no cambian entre observaciones (sin información útil).
+  - **Mal importadas**: cuando los encabezados están desplazados y aparecen como filas.
+
+---
+
+### 📦 Funciones útiles del paquete `{janitor}`
+
+- `remove_constant()`: elimina columnas que tienen el mismo valor en todos los registros.
+- `row_to_names()`: transforma una fila (usualmente la primera) en nombres de columna, útil cuando la cabecera del archivo no fue leída correctamente.
+
+---
+
+### 📊 Análisis con árboles de decisión
+
+También podemos usar **árboles de decisión** con el paquete `{rpart}` para:
+
+- Predecir **qué variables explican la presencia de valores faltantes**.
+- Identificar patrones en los `NA` según otras variables.
+- Visualizar las **características de los datos asociadas a registros incompletos**, lo que puede ayudar a definir estrategias de imputación o exclusión.
+
+💡 *Tip:* Este tipo de análisis es muy útil en etapas exploratorias cuando los `NA` no parecen aleatorios.
+
+
+```{r message=FALSE, warning=FALSE}
+
+# ------------------------------------------------------
+# 📦 Cargar librerías
+library(dplyr)
+library(janitor)
+library(naniar)
+library(rpart)
+library(rpart.plot)
+
+# ------------------------------------------------------
+# 📈 Árbol de decisión para entender qué variables predicen los NAs
+datos <- airquality
+
+datos %>%
+  add_prop_miss() %>%
+  rpart(prop_miss_all ~ ., data = .) %>%
+  prp(type = 4, extra = 101, prefix = "Prop. Miss = ", cex = 0.7)
+
+# ------------------------------------------------------
+# 🧪 Detección de columnas sin variabilidad
+
+mi_dataframe <- data.frame(
+  estudiantes = c("Felipe", "Verónica", "Alina"),
+  calificaciones = 8:10,
+  curso = "Matemáticas"
+)
+
+# curso es constante
+mi_dataframe |> remove_constant()
+
+# ------------------------------------------------------
+# 📂 Reparación de archivos mal estructurados (encabezados desfasados)
+
+df_que_me_pasaron <- data.frame(
+  X_1 = c(NA, "ID", 1:3),
+  X_2 = c(NA, "Value", 4:6)
+)
+
+df_que_me_pasaron
+
+# Usamos la fila 2 como nombres de columnas
+row_to_names(df_que_me_pasaron, row_number = 2)
+
+# Caso con más NAs antes del encabezado
+df_que_me_pasaron <- data.frame(
+  X_1 = c(NA, NA, NA, "ID", 1:3),
+  X_2 = c(NA, NA, NA, "Value", 4:6)
+)
+
+df_que_me_pasaron
+
+# Fijamos la fila 4 como nombres correctos
+row_to_names(df_que_me_pasaron, row_number = 4)
+```
 
 
 
+## 🔄 Transformación de datasets con `{tidyr}`
+
+
+El paquete `{tidyr}` permite transformar datasets entre dos formatos comunes:
+
+- **Ancho a largo** (`pivot_longer()`): convierte columnas en filas.
+- **Largo a ancho** (`pivot_wider()`): convierte filas en columnas.
+
+---
+
+### 📌 Argumentos clave de `pivot_longer()`
+
+- `cols = ...`: columnas que se desea transformar en filas.
+- `names_to`: nombre de la nueva columna que contendrá los **nombres originales** de las columnas.
+- `values_to`: nombre de la columna que contendrá los **valores originales**.
+- `names_prefix`: elimina un **prefijo específico** de los nombres de columna.
+- `names_pattern`: permite **extraer partes** de los nombres usando expresiones regulares (regex).
+
+---
+
+### 📌 Argumentos clave de `pivot_wider()`
+
+- `names_from`: especifica qué columna se usará para **crear nuevos nombres de columna**.
+- `values_from`: define qué columna contiene los **valores que se colocarán** en las nuevas columnas.
+- `values_fill`: define qué valor se utilizará para **rellenar los espacios vacíos** (por defecto es `NA`).
+
+💡 *Tip:* Estos cambios son esenciales en análisis longitudinales, reshaping de resultados o para preparar datos para visualización o modelado.
+
+
+```{r message=FALSE, warning=FALSE}
+
+# ------------------------------------------------------
+# 📦 Librerías
+library(tidyr)
+library(dplyr)
+library(ggplot2)
+library(tidyverse) 
+
+# ------------------------------------------------------
+# 🔁 pivot_longer: tabla ancha a larga
+df <- data.frame(estudiante = c('Pedro', 'Pablo', 'Lorena', 'Eugenia'),
+                 mes1 = c(8, 10, 6, 5),
+                 mes2 = c(9, 4, 7, 8))
+
+df |> pivot_longer(cols = c('mes1', 'mes2'),
+                   names_to = 'periodo',
+                   values_to = 'calif')
+
+# 📥 Ejemplo web
+datos_genes <- read.delim("https://davetang.org/file/TagSeqExample.tab", header = TRUE)
+datos_genes |> pivot_longer(cols = -gene, names_to = "muestra", values_to = "conteo") |> head()
+
+# ------------------------------------------------------
+# 📊 Ejemplo real con dataset `billboard`
+library(tidyverse)
+
+datos <- as_tibble(tidyr::billboard)
+
+
+# Pivot largo con limpieza de nombre
+datos_largos <- datos |> pivot_longer(cols = starts_with("wk"),
+                                      names_to = "week",
+                                      names_prefix = "wk",
+                                      values_to = "rank",
+                                      values_drop_na = TRUE) #|> head()
+
+# Convertimos a numérica y resumimos
+datos_largos <- datos_largos |> mutate(week = as.numeric(week)) 
+datos_resumen <- datos_largos |>
+  group_by(artist, track, date.entered) |>
+  summarise(max_sem = max(week),
+            min_ranking = min(rank),
+            max_ranking = max(rank)) |>
+  ungroup() |>
+  mutate(dia_anio = lubridate::yday(date.entered)) #|> head()
+
+# Graficar por periodos
+datos_resumen |> filter(date.entered <= "1999-12-31") |> 
+  ggplot(aes(x = reorder(track, -dia_anio), y = max_sem)) +
+  geom_bar(stat = "identity") + coord_flip()
+
+# ------------------------------------------------------
+# 🪄 pivot_longer con patrón de nombre: WHO dataset
+who |> pivot_longer(cols = new_sp_m014:newrel_f65,
+                    names_to = c("diagnosis", "gender", "age"),
+                    names_pattern = "new_?(.*)_(.)(.*)",
+                    values_to = "count") |> head()
+
+# ------------------------------------------------------
+# 📐 Ejemplo con `anscombe` usando names_pattern
+datos_anscombe <- anscombe %>%
+  pivot_longer(everything(), names_to = c(".value", "set"),
+               names_pattern = "(.)(.)")
+
+# Graficar Anscombe
+datos_anscombe |> ggplot(aes(x = x, y = y, color = set)) +
+  geom_point() + facet_wrap(~set) + theme_light()
+
+# Medias iguales a pesar de gráficas diferentes
+datos_anscombe |> group_by(set) |> summarise(x_media = mean(x), y_media = mean(y))
+
+# ------------------------------------------------------
+# ⬆️ pivot_wider: largo a ancho
+
+df <- data.frame(estudiante = rep(c('Ariana', 'Daniel'), each=4),
+                 anio = rep(c(1, 1, 2, 2), times=2),
+                 semestre = rep(c('primavera', 'otonio'), times=4),
+                 calif = c(84, 60, 78, 77, 62, 99, 88, 74))
+
+df |> pivot_wider(names_from = semestre, values_from = calif)
+
+# Otro ejemplo con datos mensuales
+df <- data.frame(anio = rep(2024:2025, each = 12),
+                 mes = rep(month.name, times = 2))
+set.seed(06032025)
+df <- df |> mutate(medicion = 100 * runif(n()))
+df |> pivot_wider(names_from = "mes", values_from = "medicion")
+
+# ------------------------------------------------------
+# 🐟 Ejemplo con `fish_encounters`
+fish_encounters |> pivot_wider(names_from = station, values_from = seen) |> head()
+fish_encounters |> pivot_wider(names_from = station, values_from = seen, values_fill = 0) |> head()
+
+# ------------------------------------------------------
+# 🏠 Ejemplo con `us_rent_income`
+us_rent_income |> pivot_wider(names_from = variable, values_from = c(estimate, moe)) |> head()
+
+# ------------------------------------------------------
+# 🧠 Mini ejercicio final
+df <- data.frame(estudiante = c('Berenice', 'Berenice', 'Leo', 'Leo', 'Frida', 'Frida'),
+                 anio = c(2024, 2025, 2024, 2025, 2024, 2025),
+                 puntos = c(22, 29, 18, 11, 12, 19),
+                 retardos = c(2, 3, 6, 8, 5, 2)) |> head()
+
+df
+```
 
 
 
+## 🛠️ Transformaciones avanzadas con `{tidyr}`: combinar, separar, rellenar y desanidar
 
+### 📝 Resumen: Funciones útiles de `{tidyr}` para manipulación avanzada
+
+#### 🔗 `unite()`
+- Combina varias columnas en una sola, uniendo su contenido con un separador definido.
+
+#### 🔍 `separate_longer_delim()`
+- Divide el contenido de una celda en **múltiples filas** usando un delimitador.
+
+#### 🔍 `separate_wider_delim()`
+- Divide el contenido de una celda en **múltiples columnas** con un delimitador.
+
+#### ❌ `drop_na()`
+- Elimina filas que contienen valores faltantes (`NA`). Puedes especificar columnas clave.
+
+#### ➕ `fill()`
+- Rellena valores faltantes (`NA`) usando los valores válidos anteriores o posteriores.
+  - Ideal para estructuras tipo Excel donde ciertos valores aparecen una sola vez.
+
+#### 🔁 `replace_na()`
+- Reemplaza `NA` por un valor específico definido por el usuario.
+
+---
+
+### 📦 Funciones para listas o estructuras anidadas
+
+#### `unnest_longer()`
+- Convierte elementos de listas en **múltiples filas**.
+
+#### `unnest_wider()`
+- Convierte listas en **múltiples columnas**.
+
+#### `hoist()`
+- Extrae componentes específicos de listas anidadas y los coloca como columnas individuales.
+
+---
+
+#### 🧮 `rowwise()`
+- Permite aplicar operaciones **por fila**, útil para trabajar con listas o realizar cálculos personalizados fila por fila.
+
+💡 *Tip:* Estas funciones son muy útiles cuando los datos vienen mal estructurados, o cuando se trabaja con APIs, listas anidadas o formularios mal formateados.
+
+
+```{r message=FALSE, warning=FALSE}
+
+
+# ------------------------------------------------------
+# 📌 Ejemplo 1: Combinar columnas con unite()
+
+df <- data.frame(estudiante = c('Berenice', 'Berenice', 'Leo', 'Leo', 'Frida', 'Frida'),
+                 anio = c(2024, 2025, 2024, 2025, 2024, 2025),
+                 puntos = c(22, 29, 18, 11, 12, 19),
+                 retardos = c(2, 3, 6, 8, 5, 2))
+
+df |> unite(c(puntos, retardos), col = "puntos_y_retardos", sep = "-")
+
+df <- df |> mutate(reportes = c(2, 3, 3, 2, 1, 0))
+df |> unite(c(puntos, retardos, reportes), col = "mounstrosa", sep = "/")
+
+# ------------------------------------------------------
+# 📌 Ejemplo 2: Separar columnas largas y limpiar
+
+url <- "https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2022/2022-01-25/details.csv"
+datos <- readr::read_csv(url) |> select(id, primary, boardgamecategory) |> head()
+
+# Separar categoría en múltiples filas
+datos |> separate_longer_delim(boardgamecategory, delim = ", ")
+
+# Limpiar los caracteres especiales
+library(stringr)
+patron <- c(`[` = "", `]` = "", `"` = "", `'` = "") |> coll()
+datos |> separate_longer_delim(boardgamecategory, delim = ", ") |>
+  mutate(boardgamecategory_limpio = str_replace_all(boardgamecategory, pattern = patron))
+
+# ------------------------------------------------------
+# 📌 Ejemplo 3: Separar en múltiples columnas
+
+datos <- data.frame(anio = c(2024, 2024, 2025),
+                    inventario = c("vanilla,1.30", "chocolate,1.50", "fresa,1.00"))
+datos |> separate_wider_delim(inventario, delim = ",", names = c("sabor", "precio"))
+
+# ------------------------------------------------------
+# 📌 Ejemplo 4: Rellenar y limpiar datos
+
+df <- data.frame(x1 = c("A", "B", "C", "D", "E", "F"),
+                 x2 = c(1, NA, NA, 4, NA, 7))
+
+df |> drop_na(x2)
+df |> fill(x2)
+df |> fill(x2, .direction = "up")
+df |> replace_na(replace = list(x2 = pi))
+
+# ------------------------------------------------------
+# 📌 Ejemplo 5: Desanidar columnas listas (`unnest` y `hoist`)
+
+library(dplyr)
+sub_datos <- starwars |> head(15)
+
+# Expandir listas en columnas
+sub_datos |> select(name, films) |> unnest_longer(films)
+sub_datos |> select(name, films) |> unnest_wider(films, names_sep = "_")
+sub_datos |> select(name, films) |> hoist(films, primera = 1, segunda = 2)
+
+# Agrupar vehículos y naves por personaje
+sub_datos |> rowwise() |>
+  mutate(transporte = list(append(vehicles, starships))) |>
+  unnest_longer(transporte)
+
+# Contar número de transportes por personaje
+starwars |> rowwise() |> mutate(num_transportes = length(c(vehicles, starships)))
+
+```
 
 
 
