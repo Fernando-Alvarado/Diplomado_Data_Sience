@@ -1,0 +1,87 @@
+---
+title: "Lijia Yu's resume"
+author: Lijia Yu
+date: "`r Sys.Date()`"
+output:
+  pagedown::html_resume:
+    # set it to true for a self-contained HTML page but it'll take longer to render
+    self_contained: false
+# uncomment this line to produce HTML and PDF in RStudio:
+#knit: pagedown::chrome_print
+---
+
+# Estudio de R, para aclarar puntos importante
+
+## Bases de datos en R 
+
+**Librerias necesarias:**
+
+install.packages("DBI")
+install.packages("RSQLite")
+library(DBI)
+library(RSQLite)
+
+
+**Conexión a la base de datos:**
+
+# Asegúrate de estar en el directorio correcto o usa ruta completa
+conn <- dbConnect(RSQLite::SQLite(), "vuelos.db")
+
+**Ver las tablas disponibles:**
+
+# Opción segura
+dbListTables(conn)
+
+# Si no regresa nada, intenta forzar la consulta
+dbGetQuery(conn, "SELECT name FROM sqlite_master WHERE type = 'table';")
+
+
+**Ver las columnas de la tabla**
+
+# Supongamos que tienes una tabla llamada 'flights'
+dbListFields(conn, "flights")
+
+**Leer toda la tabla a un dataframe:**
+
+flights <- dbReadTable(conn, "flights")
+head(flights)
+
+**Leer una consulta SQL personalizada:**
+
+query <- "SELECT * FROM flights WHERE origin = 'JFK' LIMIT 10"
+df <- dbGetQuery(conn, query)
+print(df)
+
+
++ Otro ejemplo mas complejo 
+  
+
+query <- "
+  SELECT carrier, COUNT(*) AS num_vuelos
+  FROM flights
+  GROUP BY carrier
+  ORDER BY num_vuelos DESC
+"
+dbGetQuery(conn, query)
+
+**Escribir una nueva tabla:**
+
+# Supón que tienes un nuevo dataframe
+new_data <- data.frame(id = 1:3, name = c("A", "B", "C"))
+
+# Lo guardas en la base como tabla nueva
+dbWriteTable(conn, "nueva_tabla", new_data)
+
+ **Borrar una tabla:**
+
+ dbRemoveTable(conn, "nueva_tabla")
+
+**Cerrar la conexión:**
+
+dbDisconnect(conn)
+
+
+
+
+
+

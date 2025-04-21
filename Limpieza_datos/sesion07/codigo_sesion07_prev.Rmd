@@ -33,6 +33,8 @@ Llevan a entender los elementos básicos de MongoDB (o DocumentDB) que es un fra
 
 Así se puede ver un registro ("renglón") en formato JSON
 
+
+# Introducción a datos en formato JSON
 ```
 {
   "nombre": "Juan Pérez",

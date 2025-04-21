@@ -1157,13 +1157,13 @@ url <- "https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/dat
 datos <- readr::read_csv(url) |> select(id, primary, boardgamecategory) |> head()
 
 # Separar categoría en múltiples filas
-datos |> separate_longer_delim(boardgamecategory, delim = ", ")
+datos |> separate_longer_delim(boardgamecategory, delim = ", ") |> head()
 
 # Limpiar los caracteres especiales
 library(stringr)
 patron <- c(`[` = "", `]` = "", `"` = "", `'` = "") |> coll()
 datos |> separate_longer_delim(boardgamecategory, delim = ", ") |>
-  mutate(boardgamecategory_limpio = str_replace_all(boardgamecategory, pattern = patron))
+  mutate(boardgamecategory_limpio = str_replace_all(boardgamecategory, pattern = patron)) |> head()
 
 # ------------------------------------------------------
 # 📌 Ejemplo 3: Separar en múltiples columnas
@@ -1197,19 +1197,475 @@ sub_datos |> select(name, films) |> hoist(films, primera = 1, segunda = 2)
 # Agrupar vehículos y naves por personaje
 sub_datos |> rowwise() |>
   mutate(transporte = list(append(vehicles, starships))) |>
-  unnest_longer(transporte)
+  unnest_longer(transporte) |> head()
 
 # Contar número de transportes por personaje
-starwars |> rowwise() |> mutate(num_transportes = length(c(vehicles, starships)))
+starwars |> rowwise() |> mutate(num_transportes = length(c(vehicles, starships))) |> head()
 
 ```
 
 
 
+## ✨ Limpieza y manipulación de texto con `{stringr}`
+
+#### 🔤 Manipulación y transformación de texto
+
+- `tolower()`, `toupper()`: convierten cadenas de texto a minúsculas o mayúsculas, respectivamente.
+- `paste()`, `paste0()`: combinan múltiples strings. `paste()` permite definir un separador con `sep =`, mientras que `paste0()` los une directamente.
+
+#### 🔍 Separación, conteo y detección de patrones
+
+- `str_split()`, `str_split_fixed()`, `str_split_i()`: separan texto en partes usando un patrón (por ejemplo, espacios, comas o guiones).
+- `str_count()`: cuenta cuántas veces aparece un patrón dentro de cada string.
+- `str_detect()`: devuelve `TRUE` o `FALSE` si el patrón está presente en el texto.
+- `str_replace_all()`: reemplaza **todas** las apariciones de un patrón por otro valor.
+- `str_extract_all()`: extrae **todas** las coincidencias de un patrón (regex) de un string.
+
+---
+
+### 🔧 Modificadores útiles para trabajar con patrones
+
+- `coll()`: permite controlar la **sensibilidad a mayúsculas/minúsculas** y configurar la **localización regional**. Por ejemplo, puedes ajustar el comportamiento para idiomas como el turco.
+- `fixed()`: interpreta el patrón como **texto literal**, no como expresión regular. Es útil cuando no se desea evaluar caracteres especiales como `.` o `*`.
+
+💡 *Tip:* La mayoría de estas funciones provienen del paquete `{stringr}`, que ofrece una sintaxis coherente y poderosa para trabajar con texto en R.
+
+
+
+```{r message=FALSE, warning=FALSE}
+
+# 🔡 Transformaciones básicas
+
+mi_string <- "Ejemplo de STRING, con caraceteres varios (12, 15 y 10.2)?!"
+tolower(mi_string)
+
+otro_string <- "Wow, tengo más que decir!!"
+paste(mi_string, otro_string, sep = " ")
+paste(mi_string, otro_string, sep = "@@@@")
+paste(mi_string, otro_string)
+paste0(mi_string, otro_string)
+
+# ------------------------------------------------------
+# 📦 Separaciones, divisiones, conteo
+
+stringr::str_split(string = mi_string, pattern = " ")
+stringr::str_split(string = mi_string, pattern = boundary("word"))
+stringr::str_count(string = mi_string, pattern = " ")
+stringr::str_count(string = mi_string, pattern = boundary("word"))
+
+# ------------------------------------------------------
+# 🍍 Ejemplo con frutas y separación fija
+
+fruits <- c("apples and oranges and pears and bananas",
+            "pineapples and mangos and guavas")
+
+fruits |> stringr::str_split(pattern = " and ")
+fruits |> stringr::str_split(pattern = " and ", simplify = TRUE)
+fruits |> stringr::str_split(pattern = " and ", n = 3)
+fruits |> stringr::str_split(pattern = " and ", n = 2)
+fruits |> stringr::str_split_fixed(pattern = " and ", n = 3)
+fruits |> stringr::str_split_i(pattern = " and ", i = 2)
+fruits |> stringr::str_split_i(pattern = " and ", i = -1)
+
+# ------------------------------------------------------
+# 🧠 Collation y sensibilidad a mayúsculas/minúsculas (Turco)
+
+infierno_de_i <- c("istanbul", "İzmar", "Istanbul", "izmar", "\u0130")
+
+# Comparación sensible a mayúsculas
+stringr::str_detect(infierno_de_i, pattern = coll("i", TRUE))
+
+# Comparación con configuración regional turca
+stringr::str_detect(infierno_de_i, coll("i", TRUE, locale = "tr"))
+
+# Comparación como string fijo, sensible a mayúsculas
+stringr::str_detect(infierno_de_i, fixed("i", TRUE))
+
+# ------------------------------------------------------
+# 🔍 Reemplazos y extracción con expresiones regulares
+
+str_split(mi_string, pattern = "!")[[1]] -> mi_string_en_vector
+grep(pattern = "\\?", x = mi_string_en_vector)
+
+stringr::str_replace_all(mi_string, "e", "@@")
+stringr::str_extract_all(mi_string, "[0-9]+")
+stringr::str_extract_all(mi_string, "[?]+")
+stringr::str_extract_all(mi_string, "[a-z]+")
+stringr::str_extract_all(mi_string, regex("[a-z]+", ignore_case = TRUE))
+```
+
+
+
+## 🧼 Limpieza y análisis de texto: expresiones regulares y nubes de palabras
+
+### 📝 Resumen: Limpieza y análisis de texto con `stringr` y `quanteda`
+
+#### ✂️ Limpieza de texto con `stringr::str_extract()`
+
+- `"\\d"`: extrae **dígitos individuales**.
+- `"[a-z]+"`: extrae **cadenas de letras minúsculas**.
+- `"\\b[a-z]+\\b"`: extrae **palabras completas** usando *word boundaries* (`\\b`).
+- `group = n`: permite extraer un **grupo específico** (definido por paréntesis en la expresión regular).
+
+---
+
+#### 📄 Lectura de texto plano
+
+- `read.delim()`: permite cargar archivos `.txt` como **documentos de texto plano**, útil para trabajar con discursos, ensayos, artículos, etc.
+
+---
+
+#### 🧠 Análisis textual con `{quanteda}`
+
+- `tokens()`: divide el texto en **tokens** (palabras, signos de puntuación, etc.).
+- `tokens_remove()`: elimina *stopwords*, es decir, palabras comunes sin significado importante (`el`, `la`, `de`, `y`, etc.).
+- `dfm()`: convierte los tokens en una **matriz documento-frecuencia**, donde las filas son documentos y las columnas son palabras.
+- `textplot_wordcloud()`: genera una **nube de palabras** para visualizar la frecuencia de términos más comunes en el texto.
+
+💡 *Tip:* La combinación de limpieza con `stringr` y análisis con `quanteda` permite realizar análisis de texto cuantitativo de manera eficiente y reproducible.
+
+
+
+```{r message=FALSE, warning=FALSE}
+library(quanteda)
+library(quanteda.textplots)
+
+
+# ------------------------------------------------------
+# 📌 Ejemplos de extracción con str_extract
+
+mi_vector <- c("123 grapes", "apples x4", "bag of flour",
+               "kiwi and lime", "Bag of sugar", "milk x2")
+
+str_extract(mi_vector, "\\d")
+str_extract_all(mi_vector, "\\d")
+
+str_extract(mi_vector, "[a-z]+")
+str_extract(mi_vector, "[a-z]{1,4}")
+str_extract(mi_vector, "\\b[a-z]+\\b")
+str_extract(mi_vector, "([a-z]+) of ([a-z]+)")
+str_extract(mi_vector, "([a-z]+) of ([a-z]+)", group = 1)
+str_extract(mi_vector, "([a-z]+) of ([a-z]+)", group = 2)
+
+# ------------------------------------------------------
+# 📄 Lectura de discurso y análisis básico
+
+setwd("C:/Users/ferna/Documents/Diplomado_Data_Sience/Estudio/Data")
+mi_texto <- read.delim("./ObamaSpeech.txt", header = FALSE)
+str(mi_texto)
+
+# Resumen como corpus
+mi_texto[1,1] |> corpus() |> summary()
+
+# Matriz documento-frecuencia
+mi_texto[1,1] |> quanteda::tokens() |> dfm()
+
+# Palabras vacías en distintos idiomas
+head(stopwords("en"), 20)
+head(stopwords("es"), 10)
+
+# Eliminar stopwords del discurso
+mi_texto[17,1] |> quanteda::tokens() |>
+  tokens_remove(stopwords("en")) |> dfm()
+
+# ------------------------------------------------------
+# 🌐 Múltiples frases + documento de texto + letras de canción
+
+primera_frase <- "This is $10 in 999 different ways,\n up and down; left and right!"
+segunda_frase <- "@koheiw7 working: on #quanteda 2day\t4ever, http://textasdata.com?page=123."
+
+texto_completo <- c(
+  text1 = primera_frase,
+  text2 = segunda_frase,
+  text3 = mi_texto[17,1],
+  text4 = mi_texto[27,1],
+  text5 = mi_texto[37,1],
+  text6 = mi_texto[47,1],
+  text7 = mi_texto[57,1],
+  text8 = billboard::lyrics[5, "lyrics"]
+)
+
+# ------------------------------------------------------
+# 🔤 Tokenización y visualización
+
+# Tokenización básica
+texto_completo |> quanteda::tokens()
+
+# Nube de palabras con stopwords eliminadas
+texto_completo |>
+  quanteda::tokens() |>
+  tokens_remove(stopwords("en")) |>
+  dfm() |>
+  textplot_wordcloud(min_count = 2)
+
+# Nube sin números ni puntuación
+texto_completo |>
+  quanteda::tokens(remove_numbers = TRUE,
+                   remove_punct = TRUE,
+                   remove_separators = TRUE) |>
+  dfm() |> textplot_wordcloud()
+
+# Nube sin números, puntuación, separadores, y sin stopwords
+texto_completo |>
+  quanteda::tokens(remove_numbers = TRUE,
+                   remove_punct = TRUE,
+                   remove_separators = TRUE) |>
+  tokens_remove(stopwords("en")) |>
+  dfm() |> textplot_wordcloud()
+```
+
+
+# Introducción a datos en formato JSON
+
+JSON (JavaScript Object Notation) es un formato de datos ligero que generalmente se utiliza para almacenar e intercambiar información entre sistemas.
+
+Es "fácil" de leer y escribir para los humanos y sencillo de analizar y generar para las computadoras.
+
+JSON se usa frecuentemente en aplicaciones web para transmitir datos entre un servidor y un cliente.
+
+## Características principales de JSON
+
+Usa parejas clave-valor (llave-valor): Los datos se almacenan en pares de clave y valor (similar a los diccionarios en Python).
+
+Ligero y legible: Es "fácil" de entender y adecuado para la transmisión de datos.
+
+Independiente del lenguaje de programación: Aunque se basa en la sintaxis de JavaScript, JSON se puede utilizar con muchos lenguajes de programación (como R, Python, Java, C#, etc.).
+
+Soporta estructuras anidadas: JSON puede representar datos complejos con arreglos y objetos.
+
+Puede llevarte al infierno: Las ventajas de flexibilidad, eventualmente se convierten en su mayor desventaja, al tener datos almacenados sin ninguna estructura
+
+Llevan a entender los elementos básicos de MongoDB (o DocumentDB) que es un framework de bases de datos NoSQL que almacena datos en documentos similares a JSON (en formato BSON).
+
+Así se puede ver un registro ("renglón") en formato JSON
+
+
+## 🧾 Introducción al manejo de datos JSON en R con `{jsonlite}`
+
+
+
+- El formato **JSON** (**JavaScript Object Notation**) es ampliamente utilizado para **intercambiar datos** entre aplicaciones, especialmente en la web (por ejemplo, en APIs).
+
+---
+
+### 📦 Funciones clave del paquete `{jsonlite}`
+
+- `fromJSON()`: convierte un archivo o string JSON a **objetos R** (listas, dataframes, etc.).
+- `toJSON()`: convierte objetos R a JSON, ideal para enviar datos a APIs o guardarlos en archivos.
+- Permite un **mapeo bidireccional sin pérdida de estructura**, funcionando bien con:
+  - Dataframes
+  - Listas anidadas
+  - Vectores
+  - Matrices
+
+---
+
+### ✅ Ventajas principales
+
+- Ideal para trabajar con **APIs REST** u otras fuentes de datos web.
+- Interpreta automáticamente estructuras **anidadas, vacías o complejas**.
+- Compatible con objetos comunes de R como **tibbles, listas y matrices**, listos para análisis.
+
+💡 *Tip:* Puedes usar `pretty = TRUE` en `toJSON()` para obtener una versión legible para humanos.
+
+
+```{r message=FALSE, warning=FALSE}
+
+
+# ------------------------------------------------------
+# 📦 Cargar librerías
+library(jsonlite)
+library(dplyr)
+library(ggplot2)
+
+# ------------------------------------------------------
+# 📥 Lectura de JSON tipo lista de objetos (estilo API)
+
+json <- '
+[
+  {"Nombre" : "Mario", "Edad" : 32, "Ocupacion" : "Plumber"}, 
+  {"Nombre" : "Peach", "Edad" : 21, "Ocupacion" : "Princess"},
+  {},
+  {"Nombre" : "Bowser", "Ocupacion" : "Koopa"}
+]'
+
+df <- json |> fromJSON()
+df
+
+# ------------------------------------------------------
+# 🔁 Convertir dataframe a JSON
+df |> toJSON(pretty = TRUE)
+
+# ------------------------------------------------------
+# 🧮 Lectura de una matriz en JSON
+json <- '[
+  [1, 2, 3, 4],
+  [5, 6, 7, 8],
+  [9, 10, 11, 12]
+]'
+formato_matriz <- fromJSON(json)
+formato_matriz
+class(formato_matriz)
+
+# 🔁 De matriz en R a JSON
+formato_matriz |> toJSON(pretty = TRUE)
+```
+
+
+## 🧾 Lectura de datos JSON en R: casos simples y estructuras complejas
+
+
+### 📝 Resumen: Lectura de datos JSON con `fromJSON()` (`{jsonlite}`)
+
+La función `fromJSON()` permite leer datos en formato **JSON** desde un texto o una URL, y devuelve un objeto R dependiendo de la estructura del JSON.
+
+---
+
+### ✔️ Comportamiento según estructura del JSON
+
+- Arreglo de **primitivos** (números, cadenas): se convierte en un **vector**.
+- Arreglo de **objetos** (llaves y valores): se convierte en un **dataframe**.
+- Arreglo de **arreglos uniformes** (listas de misma longitud): se convierte en una **matriz**.
+- JSON **anidado o complejo**: se convierte en una **lista**, que puede requerir procesamiento adicional con `purrr`, `tidyr` o `dplyr`.
+
+---
+
+### 📌 Argumentos útiles de `fromJSON()`
+
+- `simplifyVector = TRUE`: convierte arreglos planos a vectores (por defecto está activado).
+- `simplifyDataFrame = TRUE`: convierte listas de objetos con las mismas llaves a un dataframe.
+- `simplifyMatrix = TRUE`: convierte listas de listas numéricas de igual tamaño en una matriz.
+
+💡 *Tip:* Si el resultado es una lista anidada, puedes explorarla con funciones como `str()` o `names()` y luego transformarla con `tidyjson` o `jsonlite::flatten()` si es necesario.
+
+
+```{r message=FALSE, warning=FALSE, echo = TRUE, results = "hide"}
+
+
+# Arreglo de strings
+'["Amsterdam", "Rotterdam", "Utrecht", "Den Haag"]' |> fromJSON(simplifyVector = TRUE)
+
+# Arreglo de objetos (JSON tipo tabla)
+'[{"name":"Erik", "age":43}, {"name":"Anna", "age":32}]' |> fromJSON()
+
+# Matriz numérica
+'[[1, 2, 3], [4, 5, 6]]' |> fromJSON(simplifyMatrix = TRUE)
+
+# Arreglo desigual (convierte a lista, no matriz)
+'[[1, 2, 3], [4, 5, 6], [5, 6]]' |> fromJSON(simplifyMatrix = TRUE)
+
+# Mezcla de tipos (convierte todo a strings)
+'[[1, 2, 3], [4, "5", 6]]' |> fromJSON(simplifyMatrix = TRUE)
+
+# ------------------------------------------------------
+# 📌 Formato estilo "columnas" (JSON tipo lista por nombre de columna)
+
+json <- '
+{ 
+   "ID":["1","2","3","4","5"],
+   "Name":["Alejandra","Esteban","Susana","Julian","Karina"],
+   "Salary":["722.5","815.2","1611","2829","843.25"],
+   "StartDate":["6/17/2014","1/1/2012","11/15/2014","9/23/2013","5/21/2013"],
+   "Dept":["IT","IT","HR","Operations","Finance"],
+   "Hand":["left","right","right","left", "both"]
+}'
+json |> fromJSON()
+json |> fromJSON() |> as.data.frame()
+
+# ------------------------------------------------------
+# 🌐 Lectura desde URL pública (API)
+
+url <- "https://data.ny.gov/api/views/9a8c-vfzj/rows.json?accessType=DOWNLOAD"
+datos_descargados <- fromJSON(url) |>head()
+
+# Revisamos clase y estructura general
+#class(datos_descargados)
+head(datos_descargados, 2) |> head()
+
+# Segunda entrada es la útil: contiene los datos
+datos_descargados[2] |> head()
+str(datos_descargados[['data']]) |> head()
+
+# Guardamos subconjunto
+subcjto <- datos_descargados[['data']] |> head()
+#class(subcjto)
+names(subcjto) |> head()
+
+# Consultamos una columna de la matriz (ejemplo: columna 14)
+class(subcjto[,14])|> head()
+
+# Convertimos a dataframe para trabajar más fácilmente
+as.data.frame(subcjto) |> head()
+```
 
 
 
 
+## 🧹 Exploración, limpieza y análisis de columnas desde datos JSON
 
+### 📝 Resumen: Exploración de JSONs complejos en R
+
+- Al importar JSONs complejos, es común que algunas columnas aparezcan con nombres genéricos como `V1`, `V2`, etc.
+- Se recomienda:
+  - **Seleccionar solo las columnas relevantes**.
+  - Explorar el contenido con `str()` o `glimpse()` antes de operar sobre ellas.
+
+- Algunas columnas pueden contener **listas anidadas**, lo cual requiere atención especial antes de aplicar funciones vectorizadas o transformaciones.
+
+---
+
+### 📌 Lectura recomendada
+
+- `read_json(..., simplifyVector = TRUE)` permite convertir automáticamente **estructuras planas** o semi-planas en `data.frames`.
+
+💡 *Tip:* Para JSONs complejos anidados, considera usar `jsonlite::flatten()` o herramientas como `purrr::map()` y `tidyjson` para acceder a niveles internos.
+
+
+
+```{r message=FALSE, warning=FALSE, echo = TRUE, results = "hide"}
+
+df_negocios <- subcjto |> as.data.frame() |> dplyr::select(V1, V9:V14, V16, V19, V20)
+
+# Vemos los valores únicos para decidir si eliminamos columnas
+df_negocios |> select(V20) |> unique()
+df_negocios |> select(V9) |> unique()
+df_negocios |> select(V19) |> unique()
+df_negocios |> select(V11) |> unique()  # Potencialmente basura
+df_negocios |> select(V12) |> unique()  # Potencialmente basura
+
+# Conteo de registros por condado
+df_negocios |> group_by(V9) |> summarise(conteo = n()) |> ungroup() |> arrange(desc(conteo))
+
+# Conteo conjunto por condado y categoría
+df_negocios |> group_by(V9, V19) |> summarise(conteo = n()) |> ungroup() |> arrange(desc(conteo))
+
+# Conteo de categorías únicas por condado
+df_negocios |> select(V9, V19) |> group_by(V9) |> summarise(conteo = n()) |> ungroup() |> arrange(desc(conteo))
+
+# ------------------------------------------------------
+# 📄 Lectura de un archivo JSON estructurado desde archivo local
+setwd("C:/Users/ferna/Documents/Diplomado_Data_Sience/Estudio/Data")
+datos <- read_json("datos_prueba.json")
+class(datos)
+str(datos)
+dim(datos)
+head(datos, 2)
+
+# Simplificamos para convertir en dataframe directo
+datos_df <- read_json("datos_prueba.json", simplifyVector = TRUE)
+class(datos_df)
+str(datos_df)
+head(datos_df)
+dim(datos_df)
+
+# Ver columnas que aún contienen listas
+datos_df |> select(where(is.list))
+
+# Ejemplo de elemento anidado
+datos_df$F_liv[1]
+
+# Convertimos un registro nuevamente a JSON
+datos_df |> head(1) |> toJSON(pretty = TRUE)
+```
 
 
