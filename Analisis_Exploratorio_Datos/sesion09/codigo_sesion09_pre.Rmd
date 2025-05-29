@@ -1,0 +1,379 @@
+---
+title: "Sesion 9"
+author: "Eduardo Martínez"
+date: "2025-04-05"
+output:
+  html_document: default
+---
+
+# Análisis de Componentes Principales
+
+```{r}
+library(ggplot2)
+library(ggrepel)
+library(corrplot)
+library(tibble)
+library(dplyr)
+library(tidyr)
+library(factoextra)
+library(cluster)
+```
+
+El Análisis de Componentes Principales (Principal Component Analysis, PCA) es una técnica de reducción de dimensionalidad
+
+Transforma un conjunto de datos de posibles variables correlacionadas en un nuevo conjunto de variables no correlacionadas
+
+La nuevas variables se conocen como componentes principales
+
+Dicha transformación intenta conservar la mayor cantidad de información (varianza) posible
+
+¿Para qué se usa PCA?
+
+Para reducir el número de variables manteniendo los patrones más relevantes.
+
+Para visualizar datos de muchas dimensiones (por ejemplo, en 2D o 3D).
+
+Para eliminar ruido o redundancia en los datos.
+
+Para acelerar otros algoritmos de machine learning.
+
+Es un método lineal, i.e. puede no funcionar bien con relaciones no lineales.
+
+Interpretar los componentes puede ser difícil pues representan direcciones abstractas.
+
+Imagina que tienes un conjunto de datos en 3D, pero la mayor variación se encuentra sobre un plano inclinado.
+
+PCA identifica ese plano y permite “aplanar” los datos sobre él, i.e. reduce a 2D pero conservando la estructura principal.
+
+Los componentes principales son combinaciones lineales de las variables originales.
+
+Se utilizarán conceptos de álgebra lineal como eigenvalores, eigenvectores y la descomposición en valores singulares (SVD)
+
+Una de las partes más importantes en PCA es encontrar los eigenvalores y eigenvectores de la matriz de covarianza
+
+Es simétrica, sus eigenvalores son reales y no negativos, y sus eigenvectores son ortogonales y normalizados
+
+Se ordenan los eigenvectores con respecto a sus eigenvalores de mayor a menor
+
+La primera componente principal es el eigenvector con el mayor eigenvalor
+
+## Los datos con los que trabajaremos
+
+```{r}
+datos <- factoextra::decathlon2
+head(datos)
+```
+
+```{r}
+datos_con_jugador <- datos |> tibble::rownames_to_column(var = "competidor")
+head(datos_con_jugador)
+```
+
+```{r}
+datos_con_jugador |> ggplot() +
+  geom_point(aes(x = Rank, y = Points)) +
+  geom_text_repel(aes(x = Rank, y = Points,
+                 label = competidor),
+                 size = 3) +
+  facet_grid(~ Competition) +
+  theme_light()
+```
+
+
+```{r}
+datos_num <- datos |> dplyr::select(X100m:X1500m)
+head(datos_num)
+```
+
+```{r}
+datos_num |> cor() |> corrplot(order = 'AOE', addCoef.col = 'black', tl.pos = 'd',
+                               cl.pos = 'n', col = COL2('PiYG')) 
+```
+
+
+```{r}
+datos_train <- datos_num[1:23,]
+datos_test <- datos_num[24:27,]
+```
+
+```{r}
+dim(datos_train)
+```
+
+```{r}
+dim(datos_test)
+```
+
+```{r}
+mi_pca <- prcomp(datos_train, scale = TRUE)
+```
+
+```{r}
+mi_pca |> str()
+```
+
+```{r}
+mi_pca |> summary()
+```
+
+Si se eligen los $k$ primeros eigenvectores, se forma una matriz de proyección
+$$W_k = [v_1\ v_2\ \cdots \ v_k]$$
+
+Para transformar los datos al nuevo espacio PCA
+$$Z = XW_k$$
+donde $Z$ es el nuevo conjunto de datos en un espacio reducido
+
+La proporción de varianza explicada (PVE) por cada componente
+$$PVE_k = \frac{\lambda_k}{\lambda_1 + \lambda_2 + \ldots + \lambda_p}$$
+
+Un gráfico de codo (scree plot) ayuda a visualizar cuántos componentes retienen la mayor parte de la varianza.
+
+```{r}
+mi_pca |> factoextra::fviz_eig()
+```
+
+$cos^2$ es la abreviatura de coseno al cuadrado del ángulo entre el vector de una variable o una observación, y el eje de un componente principal
+
+Sirve para medir qué tan bien está representado un individuo o una variable en un componente determinado.
+
+Supóngase que se tiene una observación $i$, y sus coordenadas sobre los primeros $k$ componentes son $z_{i1}, z_{i2}, \ldots, z_{ik}$
+
+La distancia al origen es
+$$||z_i||^2 = z_{i1}^2 + z_{i2}^2 + \ldots + z_{ik}^2$$
+
+Entonces, el $cos^2$ del individuo $i$ en el componente $j$ es
+$$cos^2(i,j) = \frac{z_{ij}^2}{||z_i||^2}$$
+
+Esto responde a la pregunta ¿Qué tanto de la posición del punto está explicado por este componente?
+
+Para una variable $x_j$, su correlación con el componente $PC_k$ es
+$$corr(x_j, PC_k) = cos(\theta)$$
+entonces
+$$cos^2(\theta) = corr^2(x_j, PC_k)$$
+Esto mide qué tanto contribuye una variable a un componente principal
+
+$cos^2$ cercano a 1, significa que el componente explica muy bien al punto o variable
+
+$cos^2$ cercano a 0, significa que el componente no explica mucho a ese punto o variable
+
+En el círculo de correlación, el $cos^2$ indica cuáles variables están bien representadas por los componentes (las que están cerca del borde del círculo lo están mejor).
+
+
+```{r}
+mi_pca |> fviz_pca_ind(col.ind = "cos2",
+                       gradient.cols = c("blue", "yellow", "red"),
+                       repel = TRUE)
+```
+
+```{r}
+mi_pca |> fviz_pca_var(col.var = "contrib",
+                       gradient.cols = c("blue", "yellow", "red"),
+                       repel = TRUE)
+```
+
+```{r}
+mi_pca |> fviz_pca_biplot(repel = TRUE, col.var = "purple", col.ind = "green")
+```
+
+```{r}
+mi_pca |> factoextra::get_eigenvalue()
+```
+
+```{r}
+mi_pca |> factoextra::get_pca_var()
+```
+
+```{r}
+objetos_mi_pca <- mi_pca |> factoextra::get_pca_var()
+```
+
+```{r}
+objetos_mi_pca$coord |> as.data.frame()
+```
+
+```{r}
+objetos_mi_pca$cor |> as.data.frame()
+```
+
+```{r}
+objetos_mi_pca$cos2 |> as.data.frame()
+```
+
+```{r}
+objetos_mi_pca$contrib |> as.data.frame()
+```
+
+```{r}
+mi_pca |> factoextra::get_pca_ind()
+```
+```{r}
+objetos_mi_pca_ind <- mi_pca |> factoextra::get_pca_ind()
+```
+
+```{r}
+objetos_mi_pca_ind$coord |> as.data.frame()
+```
+
+```{r}
+objetos_mi_pca_ind$contrib |> as.data.frame()
+```
+
+```{r}
+objetos_mi_pca_ind$cos2 |> as.data.frame()
+```
+
+```{r}
+predict(mi_pca, newdata = datos_test)
+```
+
+```{r}
+mi_pca_pred <- predict(mi_pca, newdata = datos_test)
+```
+
+
+```{r}
+graf <- fviz_pca_ind(mi_pca, repel = TRUE)
+fviz_add(graf, mi_pca_pred , color ="red")
+```
+
+```{r}
+grupos <- datos$Competition[1:23] |> as.factor()
+```
+
+```{r}
+fviz_pca_ind(mi_pca,
+             col.ind = grupos,
+             palette = c("navyblue",  "orange"),
+             addEllipses = TRUE,
+             ellipse.type = "confidence",
+             legend.title = "Competencia",
+             repel = TRUE)
+```
+
+
+```{r}
+variables_calif <- datos[1:23, 11:12, drop = FALSE]
+variables_calif |> head()
+```
+
+```{r}
+coord_variables_calif <- cor(variables_calif, mi_pca$x)
+coord_variables_calif
+```
+
+```{r}
+vars_calif_cos2 <- coord_variables_calif^2
+```
+
+```{r}
+graf <- fviz_pca_var(mi_pca)
+fviz_add(graf, coord_variables_calif, color ="blue", geom="arrow")
+```
+
+# Clustering
+
+## Agrupamiento de crímenes de EUA
+
+```{r}
+datos <- USArrests
+head(datos)
+```
+
+```{r}
+datos_escalados <- datos |> scale() |> as.data.frame()
+datos_escalados |> head()
+```
+
+```{r}
+names(datos_escalados) <- names(datos_escalados) |> paste0("_esc")
+```
+
+```{r}
+datos_escalados |> head()
+```
+
+```{r}
+set.seed(123456)
+mi_kmeans <- kmeans(datos_escalados, centers = 4)
+```
+
+```{r}
+mi_kmeans
+```
+
+```{r}
+mi_kmeans |> str()
+```
+
+```{r}
+datos_con_cluster <- datos_escalados |>
+  dplyr::mutate(cluster = mi_kmeans$cluster) |>
+  dplyr::mutate(cluster = as.factor(cluster)) |>
+  cbind(datos)
+
+datos_con_cluster <- datos_con_cluster |> tibble::rownames_to_column(var = "estado")
+```
+
+```{r}
+head(datos_con_cluster)
+```
+
+```{r}
+datos_con_cluster |> ggplot() +
+  geom_point(aes(x = Murder_esc, y = Assault_esc,
+                 color = cluster,
+                 size = UrbanPop)) +
+  theme_light()
+```
+
+```{r}
+datos_con_cluster |> ggplot() +
+  geom_point(aes(x = Murder_esc, y = Rape_esc,
+                 color = cluster,
+                 size = UrbanPop)) +
+  theme_light()
+```
+
+```{r}
+datos_con_cluster |> ggplot() +
+  geom_point(aes(x = Murder_esc, y = Assault_esc,
+                 color = cluster,
+                 size = UrbanPop)) +
+  geom_text_repel(aes(x = Murder_esc, y = Assault_esc,
+                 label = estado,
+                 color = cluster),
+                 size = 3) +
+  theme_light()
+```
+
+```{r}
+datos_con_cluster |> ggplot() +
+  geom_point(aes(x = Murder_esc, y = Rape_esc,
+                 color = cluster,
+                 size = UrbanPop)) +
+  geom_text_repel(aes(x = Murder_esc, y = Assault_esc,
+                 label = estado,
+                 color = cluster),
+                 size = 3) +
+  theme_light()
+```
+
+```{r}
+factoextra::fviz_cluster(mi_kmeans, data = datos_escalados,
+             star.plot = TRUE,
+             repel = TRUE,
+             ggtheme = theme_light())
+```
+
+```{r}
+factoextra::fviz_nbclust(datos_escalados, kmeans, method = "wss")
+```
+
+```{r}
+set.seed(123456)
+gap_stat <- cluster::clusGap(datos_escalados, FUN = kmeans, K.max = 10)
+```
+
+```{r}
+factoextra::fviz_gap_stat(gap_stat)
+```

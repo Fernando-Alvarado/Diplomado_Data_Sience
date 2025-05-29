@@ -1,0 +1,426 @@
+---
+title: "Sesión 8"
+author: "Eduardo Martínez"
+date: "2025-04-03"
+output: html_document
+---
+
+# Algunas librerías para reportes automatizado
+
++ Recuerden que no todo dataset se puede analizar de la misma manera.
+
++ Ahora les voy a presentar un par de funciones de dos librerías que hacer reportes "automatizados"
+
++ Aunque a mí me gusta usarlos más como plantillas
+
+```{r}
+library(dataMaid) # Reportes automatizados
+library(palmerpenguins)
+library(magrittr)
+library(dlookr) # Reportes automatizados y EDA
+library(mice) # Imputación/Completación de NAs
+```
+
++ Como antes, vamos a ocupar un dataset sencillo para empezar, que es el dataset de los pingüinos
+
+```{r}
+datos <- palmerpenguins::penguins
+```
+
++ La función makeDataReport hace un reporte de todo un data set y lo genera en formato PDF
+
+```{r}
+dataMaid::makeDataReport(datos)
+```
+dataMaid::makeDataReport(datos, output = "pdf", file = "mi_fabuloso_reporte.pdf")
+
++ Vamos a hacer un reporte para un dataset un poco más interesante
+
+```{r}
+datos2 <- nycflights13::flights
+dataMaid::makeDataReport(datos2)
+```
++ Tiene algunas otras funciones que ya hemos visto antes
+
+```{r}
+datos |> dataMaid::check()
+```
+
++ También le puedo decir que me regrese esto para una columna en particular
+
+```{r}
+dataMaid::check(datos$bill_length_mm)
+```
++ Lo feo es que utiliza el operador de `$` dentro del argumento de la función pero lo podemos arreglar con el operador `%$%` de la librería magrittr
+
+```{r}
+datos %$% dataMaid::check(bill_length_mm)
+```
++ También se pueden hacer algunas visualizaciones rápidas
+
+```{r}
+datos |> dataMaid::visualize()
+```
++ Y se puede hacer sólo para una columna
+
+```{r}
+dataMaid::visualize(datos$bill_length_mm)
+```
+
++ O bien con el operador de pipa
+
+```{r}
+datos %$% dataMaid::visualize(bill_length_mm)
+```
+
++ También tiene una funcionalidad de resumen
+
+```{r}
+dataMaid::summarize(datos$bill_length_mm)
+```
+
+```{r}
+datos %$% dataMaid::summarize(bill_length_mm)
+```
++ Ya que estamos en esto de la generación de reportes, también podemos generar uno con la función diagnose_web_report
+
+```{r}
+#datos |> dlookr::diagnose_web_report(subtitle = "Pingüinillos",
+#                                     output_file = "mi_reporte.html", theme = "blue")
+```
+
+```{r}
+#datos |> dlookr::diagnose_paged_report()
+```
+
+# Uso de la librería {dlookr} (segunda parta)
+
++ Es una librería que tiene muchas funcionalidades para EDAs
+
++ Una función muy útil cuando vamos a hacer modelos supervisados
+
+$$y = g(x_1, x_2, \ldots , x_p)$$
++ $y$ es la variable respuesta o la variable supervisora
+
++ $x_1,x_2,\ldots,x_p$ son variables explicativas
+
+```{r}
+datos_as_clasif <- dlookr::target_by(datos, target = species)
+```
+
++ Aquí le estoy diciendo que mi variable respuesta "y" es la de species
+
+```{r}
+datos_as_clasif |> head()
+```
+
++ Luce exactamente como el dataset original, excepto que tiene codificado que se está agrupando los datos mediante la variable `species`
+
+```{r}
+datos_as_clasif |> str()
+```
++ Ya le dijimos quien es la variable "y" ahora le tenfo que decir quién es la variable "x", voy a utilizar la función relate
+
+```{r}
+dlookr::relate(datos_as_clasif, predictor = flipper_length_mm)
+```
+
++ Es decir, le estoy diciendo que me interesa estudiar la variable `species` en función de la variable longitud del ala
+
+
+```{r}
+dlookr::relate(datos_as_clasif, predictor = flipper_length_mm) |> plot()
+```
+
++ En el caso anterior, la variable predictora o explicativa era numérica, pero tmb puede ser categórica
+
++ La "y" sigue siendo la especie pero ahora la "x" es la isla
+
+```{r}
+dlookr::relate(datos_as_clasif, predictor = island)
+```
++ Veamos una representación gráfica
+
+```{r}
+dlookr::relate(datos_as_clasif, predictor = island) |> plot()
+```
+
++ En todo lo anterior, mi "y" era una variable categórica.
+
++ También puedo decirle que ahora quiero una "y". numérica. En este caso quiero la longitud del ala
+
+```{r}
+datos_as_regres <- dlookr::target_by(datos, target = flipper_length_mm)
+```
+
+```{r}
+datos_as_regres |> head()
+```
+
+```{r}
+datos_as_regres |> str()
+```
+
++ Lo quiero hacer es relacionar "y" = longitud del ala con "x" = masa corporal
+
+```{r}
+dlookr::relate(datos_as_regres, predictor = body_mass_g)
+```
++ Basicamente lo que me hizo es un modelo de regresión lineal simple
+
+$$longitudAla = \beta_0 + \beta_1\cdot MasaCorporal$$
++ También hay una manera de hacer una representación gráfica de esta posible relación
+
+```{r}
+dlookr::relate(datos_as_regres, predictor = body_mass_g) |> plot()
+```
+
++ Ahora lo que quiero es que mi "x" sea la isla ("y" = longitud del ala)
+
+```{r}
+dlookr::relate(datos_as_regres, predictor = island)
+```
++ Lo que me devuelve es una tabla ANOVA
+
++ Podemos ver una representación gráfica
+
+```{r}
+dlookr::relate(datos_as_regres, predictor = island) |> plot()
+```
+
+# Imputación de NAs y no-outliers con la librería {dlookr}
+
++ Con librería dlookr me parece mucho más natural, la manera de inputar/rellenar datos faltantes
+
++ Veamos...
+
+```{r}
+datos <- airquality
+head(datos)
+```
+
++ Este dataset ya la habíamos revisado anteriormente, y nuestro objetivo era imputar/rellenar los NAs de la columna Ozone
+
++ Ocuparemos la función imputate_na
+
+```{r}
+# xvar es la variable que quiero rellenar
+# yvar es la variable que usaré para rellenar a la xvar
+# method es el algoritmo que usará para rellenar, en este caso un árbol de decisión
+dlookr::imputate_na(datos, xvar = Ozone, yvar = Temp, method = "rpart")
+```
+
++ Los métodos de inputación que tiene son
+
+predictor is numerical variable.
+
+"mean" : arithmetic mean.
+
+"median" : median.
+
+"mode" : mode.
+
+"knn" : K-nearest neighbors.
+
+"rpart" : Recursive Partitioning and Regression Trees.
+
+"mice" : Multivariate Imputation by Chained Equations.
+
+predictor is categorical variable.
+
+"mode" : mode.
+
+"rpart" : Recursive Partitioning and Regression Trees.
+
+"mice" : Multivariate Imputation by Chained Equations.
+
++ Vamos a asignar esta inputación a un objeto para analizarlo
+
+```{r}
+variable_inputada <- dlookr::imputate_na(datos, xvar = Ozone, yvar = Temp,
+                                         method = "rpart")
+```
+
+```{r}
+variable_inputada |> str()
+```
++ Veamos un resumen de la inputación
+
+```{r}
+variable_inputada |> summary()
+```
+
++ Veamos que tan bien hizo la inputación
+
+```{r}
+variable_inputada |> plot()
+```
+
++ Vamos a intentar otro método
+
+```{r}
+variable_inputada <- dlookr::imputate_na(datos, xvar = Ozone, yvar = Temp,
+                                         method = "median")
+variable_inputada |> plot()
+```
+
++ Una más
+
+```{r}
+variable_inputada <- dlookr::imputate_na(datos, xvar = Ozone, yvar = Temp,
+                                         method = "mice")
+variable_inputada |> plot()
+```
+
++ Como no nos decidimos... Tomaré los dos
+
+```{r}
+datos_extendida <- datos |> dplyr::mutate(ozono_arbol = dlookr::imputate_na(datos,
+                                                                            xvar = Ozone,
+                                                                            yvar = Temp,
+                                                                            method = "rpart"),
+                       ozono_mice = dlookr::imputate_na(datos, xvar = Ozone, yvar = Temp,
+                                                         method = "mice"))
+```
+
++ Podemos ocupar más de una variable para inputar/rellenar la variable ozono, en este caso ocuparé la temperatura y el viento
+
+```{r}
+variable_inputada <- dlookr::imputate_na(datos, xvar = Ozone, yvar = c(Temp, Wind),
+                                         method = "rpart")
+```
+
+```{r}
+variable_inputada |> str()
+```
+
+```{r}
+variable_inputada |> summary()
+```
++ Veamos la representación gráfica
+
+```{r}
+variable_inputada |> plot()
+```
+
++ Hice algunas más, sólo por curiosidad
+
+```{r}
+variable_inputada <- dlookr::imputate_na(datos, xvar = Ozone, yvar = Temp,
+                                         method = "mice", print_flag = FALSE)
+```
+
+```{r}
+variable_inputada |> str()
+```
+
+```{r}
+variable_inputada |> summary()
+```
+
+```{r}
+variable_inputada |> plot()
+```
+
++ Un ejemplo más en nuestro dataset de los pingüinitos
+
++ En este caso voy a inputar una variable categórica
+
+```{r}
+datos <- palmerpenguins::penguins
+head(datos)
+```
+
++ Voy a rellenar la variable sexo apoyándome de la variable masa corporal
+
+```{r}
+variable_inputada <- dlookr::imputate_na(datos, xvar = sex, yvar = body_mass_g,
+                                         method = "mice", print_flag = FALSE)
+```
+
+```{r}
+variable_inputada |> str()
+```
+
+```{r}
+variable_inputada |> summary()
+```
++ Veamos una representación gráfica de la inputación
+
+```{r}
+variable_inputada |> plot()
+```
+
++ También podemos identificar los outliers y sustituirlos por algún valor... 
+
++ Lo más común es sustituirlos por cuantiles al 5% y al 95%
+
+```{r}
+datos <- ggplot2movies::movies
+head(datos)
+```
+
+```{r}
+summary(datos$length)
+```
++ La función que vamos a ocupar es `imputate_outlier`
+
+```{r}
+variable_sin_outliers <- dlookr::imputate_outlier(datos, xvar = length,
+                                                  method = "capping")
+```
+
+Hay otros métodos
+
+method : method of missing value imputation.
+
+predictor is numerical variable
+
+"mean" : arithmetic mean
+
+"median" : median
+
+"mode" : mode
+
+"capping" : Impute the upper outliers with 95 percentile, and Impute the lower outliers with 5 percentile.
+
+```{r}
+variable_sin_outliers |> str()
+```
+
+```{r}
+variable_sin_outliers |> summary()
+```
+
++ Veamos una representación gráfica
+
+```{r}
+variable_sin_outliers |> plot()
+```
+
+```{r}
+datos_cortados <- datos |> dplyr::filter(length <= 500)
+```
+
+```{r}
+variable_sin_outliers <- dlookr::imputate_outlier(datos_cortados, xvar = length,
+                                                  method = "capping")
+```
+
+```{r}
+variable_sin_outliers |> plot()
+```
+
++ Veamos otro método
+
+```{r}
+variable_sin_outliers <- dlookr::imputate_outlier(datos, xvar = length,
+                                                  method = "median")
+variable_sin_outliers |> plot()
+```
+
+```{r}
+variable_sin_outliers <- dlookr::imputate_outlier(datos_cortados, xvar = length,
+                                                  method = "median")
+variable_sin_outliers |> plot()
+```

@@ -1,0 +1,229 @@
+---
+title: "Sesión 8"
+author: "Eduardo Martínez"
+date: "2025-04-03"
+output: html_document
+---
+
+```{r}
+library(dataMaid)
+library(palmerpenguins)
+library(magrittr)
+library(dlookr)
+library(mice)
+```
+
+```{r}
+datos <- palmerpenguins::penguins
+```
+
+```{r}
+dataMaid::makeDataReport(datos)
+```
+
+```{r}
+datos |> dataMaid::check()
+```
+
+```{r}
+dataMaid::check(datos$bill_length_mm)
+```
+
+```{r}
+datos %$% dataMaid::check(bill_length_mm)
+```
+
+```{r}
+datos |> dataMaid::visualize()
+```
+
+```{r}
+dataMaid::visualize(datos$bill_length_mm)
+```
+
+```{r}
+datos %$% dataMaid::visualize(bill_length_mm)
+```
+
+```{r}
+dataMaid::summarize(datos$bill_length_mm)
+```
+```{r}
+datos %$% dataMaid::summarize(bill_length_mm)
+```
+
+```{r}
+datos |> dlookr::diagnose_web_report(subtitle = "Pingüinillos",
+                                     output_file = "mi_reporte.html", theme = "blue")
+```
+
+
+```{r}
+datos_as_clasif <- dlookr::target_by(datos, target = species)
+```
+
+```{r}
+datos_as_clasif |> head()
+```
+
+```{r}
+dlookr::relate(datos_as_clasif, predictor = flipper_length_mm)
+```
+
+```{r}
+dlookr::relate(datos_as_clasif, predictor = flipper_length_mm) |> plot()
+```
+
+```{r}
+dlookr::relate(datos_as_clasif, predictor = island)
+```
+
+```{r}
+dlookr::relate(datos_as_clasif, predictor = island) |> plot()
+```
+
+```{r}
+datos_as_regres <- dlookr::target_by(datos, target = flipper_length_mm)
+```
+
+```{r}
+datos_as_regres |> head()
+```
+
+```{r}
+dlookr::relate(datos_as_regres, predictor = body_mass_g)
+```
+
+```{r}
+dlookr::relate(datos_as_regres, predictor = body_mass_g) |> plot()
+```
+
+```{r}
+dlookr::relate(datos_as_regres, predictor = island)
+```
+
+```{r}
+dlookr::relate(datos_as_regres, predictor = island) |> plot()
+```
+
+```{r}
+datos <- airquality
+head(datos)
+```
+
+```{r}
+dlookr::imputate_na(datos, xvar = Ozone, yvar = Temp, method = "rpart")
+```
+
+```{r}
+variable_inputada <- dlookr::imputate_na(datos, xvar = Ozone, yvar = Temp,
+                                         method = "rpart")
+```
+
+```{r}
+variable_inputada |> str()
+```
+
+```{r}
+variable_inputada |> summary()
+```
+
+```{r}
+variable_inputada |> plot()
+```
+
+```{r}
+variable_inputada <- dlookr::imputate_na(datos, xvar = Ozone, yvar = c(Temp,Wind),
+                                         method = "rpart")
+```
+
+```{r}
+variable_inputada |> str()
+```
+
+```{r}
+variable_inputada |> summary()
+```
+
+```{r}
+variable_inputada |> plot()
+```
+
+```{r}
+variable_inputada <- dlookr::imputate_na(datos, xvar = Ozone, yvar = Temp,
+                                         method = "mice", print_flag = FALSE)
+```
+
+```{r}
+variable_inputada |> str()
+```
+
+```{r}
+variable_inputada |> summary()
+```
+
+```{r}
+variable_inputada |> plot()
+```
+
+```{r}
+datos <- palmerpenguins::penguins
+head(datos)
+```
+
+
+```{r}
+variable_inputada <- dlookr::imputate_na(datos, xvar = sex, yvar = body_mass_g,
+                                         method = "mice", print_flag = FALSE)
+```
+
+```{r}
+variable_inputada |> str()
+```
+
+```{r}
+variable_inputada |> summary()
+```
+
+```{r}
+variable_inputada |> plot()
+```
+
+```{r}
+datos <- ggplot2movies::movies
+head(datos)
+```
+
+```{r}
+variable_sin_outliers <- dlookr::imputate_outlier(datos, xvar = length,
+                                                  method = "capping")
+```
+
+```{r}
+variable_sin_outliers |> str()
+```
+
+```{r}
+variable_sin_outliers |> summary()
+```
+
+```{r}
+variable_sin_outliers |> plot()
+```
+
+```{r}
+variable_sin_outliers <- dlookr::imputate_outlier(datos, xvar = length,
+                                                  method = "median")
+```
+
+```{r}
+variable_sin_outliers |> str()
+```
+
+```{r}
+variable_sin_outliers |> summary()
+```
+
+```{r}
+variable_sin_outliers |> plot()
+```
