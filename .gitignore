@@ -10,3 +10,29 @@
 *.lof
 *.db
 *.png
+
+
+*.Rproj.user/
+# Ignorar archivos de configuración de RStudio
+*.Rhistory
+*.RData
+# Ignorar archivos de configuración de R
+*.Rproj
+# Ignorar archivos de caché de R
+.Rproj.user/
+# Ignorar archivos de caché de R Markdown
+.Rmd_cache/
+# Ignorar archivos de caché de knitr
+*.knit.md
+# Ignorar archivos de caché de pandoc
+*.pandoc
+# Ignorar archivos de caché de LaTeX
+*.synctex.gz
+
+
+#Ignorar datos
+*.csv
+*.tsv
+*.xlsx
+
+

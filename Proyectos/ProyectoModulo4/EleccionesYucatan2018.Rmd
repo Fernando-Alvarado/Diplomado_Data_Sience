@@ -1,0 +1,37 @@
+---
+output:
+  pdf_document:
+    latex_engine: xelatex
+geometry: top=1.5cm, bottom=1cm, left=1.5cm, right=1.5cm
+header-includes:
+  - \usepackage{fontspec}
+  - \usepackage{amsmath}
+  - \usepackage{amssymb}
+---
+
+```{r setup, include=FALSE}
+#Limpiamos entorno
+rm(list = ls(all.names = TRUE))
+
+gc() #Liberamos memoria
+
+knitr::opts_chunk$set(
+	error = F,
+	fig.align = "center",
+	fig.dim = c(5, 3),  
+	message = FALSE,
+	warning = FALSE
+)
+
+
+# Librerias a usar
+library(ggplot2)
+library(kableExtra)
+library(boot)
+library(patchwork)
+library(dplyr)
+library(tidyr)
+library(readr)
+
+
+```
