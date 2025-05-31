@@ -31,7 +31,280 @@ library(boot)
 library(patchwork)
 library(dplyr)
 library(tidyr)
-library(readr)
+library(readr) #Leer arcuhivos csv y txt
+library(readxl)
+
+```
+
+```{r datos}
+
+computosDistritales <- read_csv("C:/Users/ferna/Documents/Diplomado_Data_Sience/Proyectos/ProyectoModulo4/Data/2018_SEE_GOB_YUC_CAS.csv")
+names(computosDistritales)[4] <- "ID_DIST_LOC"
+
+
+conteoRapido <- read_excel("C:/Users/ferna/Documents/Diplomado_Data_Sience/Proyectos/ProyectoModulo4/Data/ConteoRapidoMUESTRA_CASILLAS_YUCATAN.xlsx")
+names(conteoRapido)[c(2, 9)] <- c("ID_ESTADO", "LN")
+
+
+
+casillas <- read_delim("C:/Users/ferna/Documents/Diplomado_Data_Sience/Proyectos/ProyectoModulo4/Data/CASILLAS.txt",
+                       delim = "|",
+                       skip = 1,           # para saltar la línea "188"
+                       col_names = TRUE,
+                       trim_ws = TRUE,
+                       show_col_types = FALSE)
+names(casillas)[1] <- "ID_ESTADO"
+
+
+
+
 
 
 ```
+
+```{r}
+df_resultados <- data.frame(
+  casilla = character(),
+  nombre = character(),
+  media = numeric(),
+  low = numeric(),
+  high = numeric(),
+   stringsAsFactors = FALSE
+)
+
+
+
+
+
+# Agrega una nueva file a nuestro df, Resultados
+nueva_fila_resultados <- function(casilla, candidato, media, low, high) {
+  fila <- data.frame(
+    casilla = casilla,
+    nombre = candidato,
+    media = media,
+    low = low,
+    high = high,
+    stringsAsFactors = FALSE
+  )
+  
+  df_resultados <- rbind(df_resultados, fila)
+  return(df_resultados)
+}
+
+
+```
+
+
+```{r}
+head(conteoRapido)
+
+head(computosDistritales)
+
+head(casillas)
+```
+```{r}
+length(casillas)
+```
+
+
+```{r}
+id_unico_casilla <- function(BD){
+  paste0("A", formatC(BD$ID_ESTADO, width = 2, flag = 0),
+         formatC(BD$ID_DIST_LOC, width = 2, flag = 0), 
+         formatC(BD$SECCION, width = 4, flag = 0),
+         BD$TIPO_CASILLA,
+         formatC(BD$ID_CASILLA, width = 2, flag = 0),
+         formatC(BD$EXT_CONTIGUA, width = 2, flag = 0))
+}
+
+#Creando los IDs unicos para casilla 
+
+conteoRapido$ID_UC <- id_unico_casilla(conteoRapido)
+
+computosDistritales$ID_UC <- id_unico_casilla(computosDistritales)
+
+casillas$ID_UC <- id_unico_casilla(casillas)
+
+
+```
+
+
+```{r}
+#Creando la propocion de conteos rapidos por candidato
+
+computosDistritales$MVD   <- computosDistritales$PAN + computosDistritales$PAN_MC + computosDistritales$MC
+computosDistritales$MSR   <- computosDistritales$PRI + computosDistritales$PVEM + computosDistritales$`NA` + 
+                              computosDistritales$PRI_PVEM + computosDistritales$PRI_NA + 
+                              computosDistritales$PVEM_NA + computosDistritales$PRI_PVEM_NA
+computosDistritales$JEZC  <- computosDistritales$PRD
+computosDistritales$JJDM  <- computosDistritales$PT + computosDistritales$MORENA + computosDistritales$ES + 
+                              computosDistritales$PT_MORENA + computosDistritales$PT_ES + 
+                              computosDistritales$MORENA_ES + computosDistritales$PT_MORENA_ES
+computosDistritales$CNR   <- computosDistritales$NUM_VOTOS_CAN_NREG
+computosDistritales$NULOS <- computosDistritales$NUM_VOTOS_NULOS
+computosDistritales$TOTAL <- computosDistritales$TOTAL_VOTOS
+
+#XN <- computosDistritales[, c("MVD", "MSR", "JEZC", "JJDM", "CNR", "NULOS", "TOTAL")]
+#Creando el merge de los datos
+
+
+
+
+
+
+
+
+
+casillas188 <- casillas %>% left_join(conteoRapido, by = "ID_UC") %>%
+                            select(ID_UC, MVD, MSR, JEZC , JJDM, NULOS, CNR,  TOTAL ) %>%
+                            mutate(MVD = MVD / TOTAL, MSR = MSR / TOTAL, JEZC = JEZC / TOTAL, JJDM = JJDM / TOTAL, CNR = CNR, NULOS = NULOS, TOTAL = TOTAL) %>%
+                            filter(!is.na(MVD))
+
+
+
+
+
+
+
+casillas300 <- conteoRapido %>%
+  left_join(computosDistritales, by = c("ID_UC" = "ID_UC")) 
+
+
+
+
+casillaLoco <- casillas %>%
+  left_join(computosDistritales, by = c("ID_UC" = "ID_UC")) 
+
+
+#interseccion <- inner_join(casillas188, casillas300, by = "ID_UC")
+```
+
+casillas300 <- conteoRapido %>%
+  left_join(computosDistritales, by = c("ID" = "ID_UC")) %>%
+  select(ID_UC = ID, MVD.x, MSR.x, JEZC.x, JJDM.x, CNR.x, NULOS.x, TOTAL.x) %>%
+  mutate(
+    MVD  = MVD.x / TOTAL.x,
+    MSR  = MSR.x / TOTAL.x,
+    JEZC = JEZC.x / TOTAL.x,
+    JJDM = JJDM.x / TOTAL.x,
+    CNR  = CNR.x,
+    NULOS = NULOS.x,
+    TOTAL = TOTAL.x
+  ) %>%
+  select(ID_UC, MVD, MSR, JEZC, JJDM, NULOS, CNR, TOTAL) %>%
+  filter(!is.na(MVD))
+
+```{r}
+casillas300
+```
+
+
+
+
+```{r}
+casillas
+```
+
+
+
+```{r}
+conteoRapido
+
+
+```
+
+
+
+
+```{r}
+computosDistritales
+```
+
+
+
+```{r}
+computosDistritales
+```
+
+
+```{r}
+casillas188
+```
+
+```{r}
+casillas300
+```
+
+
+
+```{r Bootstrap}
+
+candidatos <- c("MVD", "MSR", "JEZC", "JJDM")
+casillasVotos <- c("188", "300")
+
+set.seed(123454)
+
+
+ 
+bootstrapCandidatos<- function(df, candidato, tamaño){
+  valores <- numeric(tamaño)
+  for(i in 1:tamaño){
+    muestra <- sample(df[[candidato]], size = nrow(df), replace = TRUE)
+    valores[i] <- mean(muestra)
+  }
+  meanBoot <- mean(valores)
+  sdBoot <- sd(valores)
+  
+  
+  salida<- list(
+    media = meanBoot,
+    low = meanBoot - 1.96 * sdBoot,
+    high = meanBoot + 1.96 * sdBoot,
+    sd = sdBoot
+  )
+  return(salida)
+} 
+ 
+
+
+
+```
+
+```{r}
+reps = 1000
+for (i in casillasVotos) {
+  for (candidato in candidatos) {
+    if (i == "188") {
+      resultado <- bootstrapCandidatos(casillas188, candidato, reps)
+    } else {
+      resultado <- bootstrapCandidatos(casillas300, candidato, reps)
+    }
+    
+    df_resultados <- nueva_fila_resultados(i, candidato, resultado$media, resultado$low, resultado$high)
+  }
+}
+```
+
+
+
+
+
+
+
+
+```{r}
+df_resultados
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
