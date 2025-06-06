@@ -144,95 +144,74 @@ computosDistritales$CNR   <- computosDistritales$NUM_VOTOS_CAN_NREG
 computosDistritales$NULOS <- computosDistritales$NUM_VOTOS_NULOS
 computosDistritales$TOTAL <- computosDistritales$TOTAL_VOTOS
 
-#XN <- computosDistritales[, c("MVD", "MSR", "JEZC", "JJDM", "CNR", "NULOS", "TOTAL")]
-#Creando el merge de los datos
-
-
-
-
-
-
-
-
-
-casillas188 <- casillas %>% left_join(conteoRapido, by = "ID_UC") %>%
-                            select(ID_UC, MVD, MSR, JEZC , JJDM, NULOS, CNR,  TOTAL ) %>%
-                            mutate(MVD = MVD / TOTAL, MSR = MSR / TOTAL, JEZC = JEZC / TOTAL, JJDM = JJDM / TOTAL, CNR = CNR, NULOS = NULOS, TOTAL = TOTAL) %>%
-                            filter(!is.na(MVD))
-
-
-
-
-
-
 
 casillas300 <- conteoRapido %>%
-  left_join(computosDistritales, by = c("ID_UC" = "ID_UC")) 
+  left_join(computosDistritales, by = c("ID_UC" = "ID_UC")) %>%
+  select(ID_UC, MVD, MSR, JEZC, JJDM, NULOS, CNR, TOTAL) %>%
+  filter(!is.na(MVD)) %>%
+  mutate(
+    MVD   = MVD / TOTAL,
+    MSR   = MSR / TOTAL,
+    JEZC  = JEZC / TOTAL,
+    JJDM  = JJDM / TOTAL,
+    CNR   = CNR,
+    NULOS = NULOS,
+    TOTAL = TOTAL
+  ) %>%
+  filter(!is.na(MVD | MSR | JEZC | JJDM | CNR | NULOS | TOTAL))
 
 
+casillas180 <- casillas %>%
+  left_join(computosDistritales, by = c("ID_UC" = "ID_UC")) %>%
+ select(
+    ID_UC, MVD.y, MSR.y, JEZC.y, JJDM.y, CNR.y, NULOS.y, TOTAL.y
+  ) %>%
+  mutate(
+    MVD   = MVD.y / TOTAL.y,
+    MSR   = MSR.y / TOTAL.y,
+    JEZC  = JEZC.y / TOTAL.y,
+    JJDM  = JJDM.y / TOTAL.y,
+    CNR   = CNR.y,
+    NULOS = NULOS.y,
+    TOTAL = TOTAL.y
+  ) %>%  select(ID_UC, MVD, MSR, JEZC, JJDM, NULOS, CNR, TOTAL) %>%
+  filter(!is.na(MVD))
 
 
-casillaLoco <- casillas %>%
-  left_join(computosDistritales, by = c("ID_UC" = "ID_UC")) 
-
+filtro <- casillas180 %>% left_join( casillas300, by = "ID_UC") %>%
+select(
+    ID_UC, MVD.x, MSR.x, JEZC.x, JJDM.x, CNR.x, NULOS.x, TOTAL.x
+) %>%
+   mutate(
+    MVD   = MVD.x,
+    MSR   = MSR.x,
+    JEZC  = JEZC.x,
+    JJDM  = JJDM.x,
+    CNR   = CNR.x,
+    NULOS = NULOS.x,
+    TOTAL = TOTAL.x
+  ) %>%  select(ID_UC, MVD, MSR, JEZC, JJDM, NULOS, CNR, TOTAL) %>%
+  filter(!is.na(MVD))
+  
 
 #interseccion <- inner_join(casillas188, casillas300, by = "ID_UC")
 ```
 
-casillas300 <- conteoRapido %>%
-  left_join(computosDistritales, by = c("ID" = "ID_UC")) %>%
-  select(ID_UC = ID, MVD.x, MSR.x, JEZC.x, JJDM.x, CNR.x, NULOS.x, TOTAL.x) %>%
-  mutate(
-    MVD  = MVD.x / TOTAL.x,
-    MSR  = MSR.x / TOTAL.x,
-    JEZC = JEZC.x / TOTAL.x,
-    JJDM = JJDM.x / TOTAL.x,
-    CNR  = CNR.x,
-    NULOS = NULOS.x,
-    TOTAL = TOTAL.x
-  ) %>%
-  select(ID_UC, MVD, MSR, JEZC, JJDM, NULOS, CNR, TOTAL) %>%
-  filter(!is.na(MVD))
 
 ```{r}
 casillas300
 ```
-
-
-
-
 ```{r}
-casillas
-```
+library(visdat)
 
-
-
-```{r}
-conteoRapido
-
+vis_dat(casillas300)
 
 ```
 
 
-
-
 ```{r}
-computosDistritales
-```
-
-
-
-```{r}
-computosDistritales
-```
-
-
-```{r}
-casillas188
-```
-
-```{r}
-casillas300
+filtro
+vis_dat(filtro)
 ```
 
 
@@ -240,30 +219,34 @@ casillas300
 ```{r Bootstrap}
 
 candidatos <- c("MVD", "MSR", "JEZC", "JJDM")
-casillasVotos <- c("188", "300")
+casillasVotos <- c("188", "300", "Filtro")
 
 set.seed(123454)
 
 
  
-bootstrapCandidatos<- function(df, candidato, tamaño){
+bootstrapCandidatos <- function(df, candidato, tamaño) {
+  # Elimina NA del candidato
+  vector_limpio <- df[[candidato]][!is.na(df[[candidato]])]
+
   valores <- numeric(tamaño)
-  for(i in 1:tamaño){
-    muestra <- sample(df[[candidato]], size = nrow(df), replace = TRUE)
+  for (i in 1:tamaño) {
+    muestra <- sample(vector_limpio, size = length(vector_limpio), replace = TRUE)
     valores[i] <- mean(muestra)
   }
+
   meanBoot <- mean(valores)
   sdBoot <- sd(valores)
-  
-  
-  salida<- list(
+
+  salida <- list(
     media = meanBoot,
-    low = meanBoot - 1.96 * sdBoot,
-    high = meanBoot + 1.96 * sdBoot,
-    sd = sdBoot
+    low   = meanBoot - 1.96 * sdBoot,
+    high  = meanBoot + 1.96 * sdBoot,
+    sd    = sdBoot
   )
   return(salida)
-} 
+}
+
  
 
 
@@ -271,13 +254,15 @@ bootstrapCandidatos<- function(df, candidato, tamaño){
 ```
 
 ```{r}
-reps = 1000
+reps = 10000
 for (i in casillasVotos) {
   for (candidato in candidatos) {
     if (i == "188") {
-      resultado <- bootstrapCandidatos(casillas188, candidato, reps)
-    } else {
+      resultado <- bootstrapCandidatos(casillas180, candidato, reps)
+    } else if (i == "300") {
       resultado <- bootstrapCandidatos(casillas300, candidato, reps)
+    } else {
+       resultado <- bootstrapCandidatos(filtro, candidato, reps)
     }
     
     df_resultados <- nueva_fila_resultados(i, candidato, resultado$media, resultado$low, resultado$high)
@@ -293,18 +278,100 @@ for (i in casillasVotos) {
 
 
 ```{r}
-df_resultados
+df_resultados <- df_resultados %>%
+  mutate(
+    media = media * 100,
+    low = low * 100,
+    high = high * 100
+  )
+
+df_resultados 
+```
+
+
+
+```{r}
+c188 <- df_resultados %>%
+  filter(casilla == "188") %>%
+  select(nombre, media, low, high)
+
+c300 <- df_resultados %>%
+  filter(casilla == "300") %>%
+  select(nombre, media, low, high)
+
+cf <- df_resultados %>%
+  filter(casilla == "Filtro") %>%
+  select(nombre, media, low, high)
+
+c188
+
+library(esquisse)
 ```
 
 
 
 
+```{r}
+esquisse::esquisser(c188)
+```
+
+```{r}
+ggplot(c188) +
+  aes(x = nombre, y = media) +
+  geom_bar(stat = "summary", fun = "sum", fill = "#0C4C8A") +
+  labs(title = "188 casillas") +
+  theme_minimal()
+
+ggplot(c300) +
+  aes(x = nombre, y = media) +
+  geom_bar(stat = "summary", fun = "sum", fill = "#2e7d32") +
+  labs(title = "300 casillas") +
+  theme_minimal()
+
+ggplot(cf) +
+  aes(x = nombre, y = media) +
+  geom_bar(stat = "summary", fun = "sum", fill = "#00838f") +
+  labs(title = "Filtro Casilllas casillas") +
+  theme_minimal()
+
+
+```
 
 
 
+```{r}
+ggplot(cf, aes(x = nombre)) +
+  geom_errorbar(aes(ymin = low, ymax = high), width = 0.2, colour = "#B22222", size = 1.2) +
+  geom_point(aes(y = media), colour = "#0072B2", size = 4) +
+  theme_minimal() +
+  labs(
+    title = "Intervalos de confianza - Casilla Filtro",
+    x = "Candidato",
+    y = "Porcentaje estimado (%)"
+  )
 
 
+ggplot(c188, aes(x = nombre)) +
+  geom_errorbar(aes(ymin = low, ymax = high), width = 0.2, colour = "#B22222", size = 1.2) +
+  geom_point(aes(y = media), colour = "#0072B2", size = 4) +
+  theme_minimal() +
+  labs(
+    title = "Intervalos de confianza - Casilla Filtro",
+    x = "Candidato",
+    y = "Porcentaje estimado (%)"
+  )
 
 
+ggplot(c300, aes(x = nombre)) +
+  geom_errorbar(aes(ymin = low, ymax = high), width = 0.2, colour = "#B22222", size = 1.2) +
+  geom_point(aes(y = media), colour = "#0072B2", size = 4) +
+  theme_minimal() +
+  labs(
+    title = "Intervalos de confianza - Casilla Filtro",
+    x = "Candidato",
+    y = "Porcentaje estimado (%)"
+  )
+
+```
 
 
