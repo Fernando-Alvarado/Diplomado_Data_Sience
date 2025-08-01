@@ -101,13 +101,14 @@ library(tidyverse)
 library(knitr)
 library(kableExtra)
 library(GGally)
-library(psych)
+library(psych) # Hace fa
 library(ggplot2)
 library(broom)
-library(Hmisc)
+library(Hmisc)#Sirve para poner salida de summary en formato tabla
 library(psych)
 library(scales)
-library(autoplot)
+#library(autoplot)
+library(ggplot2)
 library(recipes)
 library(rgl)
 library(plotly)
@@ -119,17 +120,17 @@ library(ggord)
 
 theme_set(theme_bw(16))
 
-df<-read.csv("C:/Users/Salvador/Desktop/Cursos2025-II/Diplomado Introducción Analítica a la Ciencia de Datos/BreastCancerDiagnosisWisconsin.csv")
+df<-read.csv("C:/Users/ferna/Documents/Diplomado_Data_Sience/Modulo_6/PCA/BreastCancerDiagnosisWisconsin.csv")
 
 df %>% dim()
 
-df %>% glimpse()
+df %>% glimpse() #Me da una pequeña descricion de los datos por columa y me dice que tipo de datos es y algunos valores
 
 df %>% head()
 
 ###Valores faltantes
 
-colSums(is.na(df))
+colSums(is.na(df)) #Checando el numero de NAs
 
 df %>% summary()
 
@@ -137,7 +138,7 @@ df %>% summary()
 
 num.dat = df %>% select_if(is.numeric)
 
- apply(num.dat,2,function(x) round(summary(x),3)) %>% 
+ apply(num.dat,2,function(x) round(summary(x),3)) %>% #Hace una tabla bonita poniendo los cuantiles de los datos
    kbl() %>%
   kable_styling(bootstrap_options = c("striped","hover","bordered")) %>% 
     kable_paper() %>%
@@ -163,9 +164,10 @@ ggplot(aes(df,x = diagnosis, y = n)) +
     geom_text(aes(label = paste0(n, " | ", signif(n / nrow(df) * 100, digits = 4), '%')), nudge_y = 10) + ggtitle("Porcentajes de resultados de biopsia")
     theme_gray()
 
+    
 df %>%
   select(where(is.numeric)) %>%
-  colMeans()
+  colMeans() #Selecciono solo las numericas
 
 ###
 
@@ -177,6 +179,8 @@ df1 |> pivot_longer(1:ncol(df1),
  names_to = "Variable", values_to="Score") |>
    ggplot(aes(x=Score)) + geom_histogram(aes(y = ..density..),bins=20,colour = 3, fill = "darkmagenta") +
      facet_wrap("Variable",ncol = 4,scales = "free" ) + theme_minimal()
+
+# Obs no se analizan las variables predictoras a nivel inferencia, solo nos interesa la respuesta
 
 ###box-plot
 
@@ -226,25 +230,76 @@ df_long |> ggplot(mapping = aes(values, fill = diagnosis)) +
 
 ggpairs(df, mapping = aes(color = diagnosis),columns = seq(2,11))
 
+
+###Estructura de correlación
+
+cor_data <- cor(df[, -1])
+cor_data
+
+cor1_data <- cor(df[, -1], method = "spearman")
+cor1_data
+
+GGally::ggcorr(cor1_data,
+               label = TRUE,
+               label_alpha = TRUE,
+               label_size = 3,
+               layout.exp = 1,
+               low = "white", mid = "blue", high = "red")
+
+
+det(cor1_data) # El determinante es muy cercano a cero, 
+
+psych::KMO(cor1_data)
+
+###Prueba de Bartlett
+psych::cortest.bartlett(cor1_data, n = dim(df1)[1])# Prueba que la matriz de correlaciones es distinta de la identidad, buscamos rechazarla
+
+
+library(corrr)
+###Todas estas medidas indican que hay una estructura de asociación fuerte
+cor.df1 <- df1 %>% cor_mat()
+cor.df1
+
+options(scipen = 999)
+format(value, scientific = FALSE)
+cor.df1 %>% cor_get_pval()
+
+cor.df1 %>%
+  cor_reorder() %>%
+  pull_lower_triangle() %>%
+  cor_plot(label = TRUE)
+
+cor.df1 %>% cor_gather() %>% print(n = Inf)
+
+###Confirmando (que es gerundio) que la estructura de correlación es simplemente BESTIAL
+
+
+
+#============================================================================================================================================
 ###PCA
+#============================================================================================================================================
+
 
 pca_fit <- df %>%
   select(where(is.numeric)) %>%
   scale() %>%
-  prcomp()
+  prcomp() # Funcion para hacer pca
 
 str(pca_fit)
 
 pca_fit
 
 pca_fit %>%
-  tidy("pcs") %>% print(n=Inf)
+  tidy("pcs") %>% print(n=Inf)#Aqui se guardan varias cosas del PCA
 
 pca_fit %>%
   tidy("d")
 
 pca_fit %>%
   tidy(matrix="eigenvalues")
+
+#Los componentes principales, son pesos que le dan nuestras variables
+
 
 pca_fit %>%
   tidy("pcs") %>%
@@ -312,10 +367,14 @@ pca_fit %>%
   labs(y = paste0("PC2: ",round(variance_exp[2]*100), "%"))+
   theme(legend.position = "top")
 
+library(ggfortify)
+
 autoplot(pca_fit, data = df) +
 geom_point(alpha = 0.7, size = 2, colour="#e319dc") +
 ggtitle("PCA: Biopsias tumores de mama")
 theme_minimal()
+
+
 
 pca_fit %>%
   augment(df) %>%
@@ -334,6 +393,7 @@ pca_fit %>%
 
 
 ###Otra forma
+
 
 wdbc_recipe <-
   recipe(~., data = df) %>% 
